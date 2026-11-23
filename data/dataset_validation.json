@@ -1,0 +1,105 @@
+{
+  "dataset": "synthetic_products_100000.csv",
+  "validated_at_utc": "2026-11-21T12:34:12+00:00",
+  "sha256_note": "The original CSV is read-only during validation and import.",
+  "rows": 100000,
+  "columns": [
+    "product_id",
+    "name",
+    "category",
+    "brand",
+    "price_inr",
+    "color",
+    "rating",
+    "stock_quantity",
+    "use_case",
+    "specifications",
+    "description",
+    "tags",
+    "image_key",
+    "image_prompt"
+  ],
+  "missing_columns": [],
+  "extra_columns": [],
+  "unique_product_ids": 100000,
+  "duplicate_product_ids": 0,
+  "duplicate_records": 0,
+  "duplicate_names": 99535,
+  "missing_values_total": 0,
+  "missing_values_by_column": {
+    "product_id": 0,
+    "name": 0,
+    "category": 0,
+    "brand": 0,
+    "price_inr": 0,
+    "color": 0,
+    "rating": 0,
+    "stock_quantity": 0,
+    "use_case": 0,
+    "specifications": 0,
+    "description": 0,
+    "tags": 0,
+    "image_key": 0,
+    "image_prompt": 0
+  },
+  "categories": {
+    "Camera": 10000,
+    "Gaming Accessories": 10000,
+    "Headphones": 10000,
+    "Keyboard": 10000,
+    "Laptop": 10000,
+    "Monitor": 10000,
+    "Smartphone": 10000,
+    "Smartwatch": 10000,
+    "Speaker": 10000,
+    "Tablet": 10000
+  },
+  "brands": 45,
+  "colors": [
+    "Black",
+    "Blue",
+    "Green",
+    "Grey",
+    "Red",
+    "Silver",
+    "White"
+  ],
+  "use_cases": 39,
+  "price_inr": {
+    "min": 501.0,
+    "max": 279993.0,
+    "mean": 60490.48,
+    "invalid_or_negative": 0
+  },
+  "rating": {
+    "min": 2.8,
+    "max": 5.0,
+    "mean": 3.898,
+    "out_of_range": 0
+  },
+  "stock_quantity": {
+    "min": 0,
+    "max": 150,
+    "negative": 0
+  },
+  "checks": {
+    "row_count_exact": true,
+    "unique_product_ids": true,
+    "ten_categories": true,
+    "category_distribution": true,
+    "no_missing_values": true,
+    "prices_numeric_nonnegative": true,
+    "ratings_in_range": true,
+    "stock_nonnegative": true,
+    "no_duplicate_records": true,
+    "product_id_format": true,
+    "id_range_complete": true
+  },
+  "all_checks_passed": true,
+  "notes": [
+    "The supplied category labels are singular (for example 'Laptop'). They are preserved exactly in PostgreSQL; the UI displays the same labels.",
+    "Product names are intentionally non-unique; the primary key is product_id and no duplicate rows exist.",
+    "The CSV has a UTF-8 BOM in its header; imports use utf-8-sig.",
+    "image_key and image_prompt are preserved for a future image system; no images are generated in this version."
+  ]
+}

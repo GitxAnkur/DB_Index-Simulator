@@ -1,0 +1,9 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.pgdata/
+.pglog/
+.env
+data/embeddings_*.npy
+.DS_Store
