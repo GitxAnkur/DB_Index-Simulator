@@ -1,5 +1,5 @@
 """Search dispatcher: validates the selected method and assembles the API
-response. Six methods remain separately selectable and separately measured.
+response. Seven methods remain separately selectable and separately measured.
 """
 from __future__ import annotations
 
@@ -12,10 +12,19 @@ import numpy as np
 from ..config import Config
 from ..embeddings import encode_query
 from ..query_parser import ParsedQuery, keywords_match_exists, parse_query
-from . import cached, composite_btree, full_scan, hash_index, hnsw, hybrid
+from . import (
+    btree,
+    cached,
+    composite_btree,
+    full_scan,
+    hash_index,
+    hnsw,
+    hybrid,
+)
 
 METHOD_MODULES = {
     "full_scan": full_scan,
+    "btree": btree,
     "hash": hash_index,
     "composite_btree": composite_btree,
     "hnsw": hnsw,
@@ -25,6 +34,7 @@ METHOD_MODULES = {
 
 METHOD_ORDER = [
     "full_scan",
+    "btree",
     "hash",
     "composite_btree",
     "hnsw",
@@ -37,6 +47,11 @@ COMPARABILITY = {
         "comparable": True,
         "group": "relational",
         "note": "Same parsed filters and keyword predicate as the other relational methods; index scans are disabled by design.",
+    },
+    "btree": {
+        "comparable": True,
+        "group": "relational",
+        "note": "Same query as the relational baseline; the planner may use any available B-tree index.",
     },
     "hash": {
         "comparable": True,
@@ -117,6 +132,11 @@ def _warnings(method: str, outcome: dict, parsed: ParsedQuery) -> list[str]:
         warnings.append(
             "No category was parsed. Category is the leading column of the "
             "composite index, so the index is not applicable."
+        )
+    if method == "btree" and plan and not indexes:
+        warnings.append(
+            "The planner chose no index for this query; see the EXPLAIN plan. "
+            "This can happen when the filter is not selective enough."
         )
     if method == "hnsw" and plan and not indexes:
         warnings.append(

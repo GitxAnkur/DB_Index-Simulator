@@ -4,7 +4,7 @@ import pytest
 
 from app import db
 
-METHODS = ["full_scan", "hash", "composite_btree", "hnsw", "hybrid", "cached"]
+METHODS = ["full_scan", "btree", "hash", "composite_btree", "hnsw", "hybrid", "cached"]
 
 
 def post_search(client, query, method, limit=5, include_plan=True):
@@ -15,7 +15,7 @@ def post_search(client, query, method, limit=5, include_plan=True):
 
 
 @pytest.mark.parametrize("method", METHODS)
-def test_all_six_methods_return_results(client, method):
+def test_all_seven_methods_return_results(client, method):
     response = post_search(client, "Black laptop under 80000", method, 5)
     assert response.status_code == 200
     data = response.get_json()
@@ -55,6 +55,13 @@ def test_full_scan_plan_has_no_index(client):
     plan = data["technical"]["explain"]
     assert plan["indexes_used"] == []
     assert plan["seq_scan_nodes"] >= 1
+
+
+def test_btree_plan_uses_a_btree_index(client):
+    data = post_search(client, "Black laptop under 80000", "btree", 5).get_json()
+    indexes = data["technical"]["indexes_used"]
+    assert any(name.endswith("_btree") for name in indexes)
+    assert data["technical"]["method_details"]["index_family"] == "B-tree"
 
 
 def test_hash_plan_uses_hash_index_for_brand(client):

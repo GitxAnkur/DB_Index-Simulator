@@ -2,7 +2,8 @@
 (() => {
   "use strict";
 
-  const ANALYSIS_KEY = "dbms2.analysis.history.v1";
+  const ANALYSIS_KEY = "dbms2.analysis.queries.v1";
+  const LAST_SEARCH_KEY = "dbms2.lastSearch.v1";
 
   const state = {
     health: null,
@@ -20,6 +21,7 @@
 
   const SHORT_LABELS = {
     full_scan: "Full Table Scan",
+    btree: "B+ Tree",
     hash: "Hash Index",
     composite_btree: "Composite Index",
     hnsw: "HNSW Vector Search",
@@ -178,8 +180,9 @@
         method: "POST",
         body: JSON.stringify({ query, method, limit, include_plan: false }),
       });
-      recordAnalysis(data);
-      renderSearch(data);
+      const analysisId = recordAnalysis(data);
+      saveLastSearch({ query, method, limit });
+      renderSearch(data, analysisId);
     } catch (error) {
       showError(error.message);
       toast(error.message, true);
@@ -198,39 +201,106 @@
     $("#searchError").hidden = true;
   }
 
-  function recordAnalysis(data) {
-    if (!data || data.out_of_scope) return;
-    const entry = {
-      method: data.method,
-      label: data.method_label,
-      query: data.query,
-      db_execution_ms: Number(data.db_execution_ms) || 0,
-      result_count: data.result_count,
-      limit: data.limit,
-      timestamp: new Date().toISOString(),
-    };
-    let history = {};
-    try {
-      const stored = JSON.parse(localStorage.getItem(ANALYSIS_KEY) || "{}");
-      if (stored && typeof stored === "object" && !Array.isArray(stored)) history = stored;
-    } catch (_) {
-      history = {};
+  function hashString(value) {
+    // FNV-1a, converted to a short stable base-36 identifier.
+    let hash = 2166136261;
+    for (let i = 0; i < value.length; i += 1) {
+      hash ^= value.charCodeAt(i);
+      hash = Math.imul(hash, 16777619);
     }
-    history[entry.method] = entry;
+    return (hash >>> 0).toString(36).toUpperCase().padStart(6, "0").slice(-6);
+  }
+
+  function queryIdFor(normalizedQuery, limit) {
+    return `Q-${hashString(`${normalizedQuery}|${limit}`)}`;
+  }
+
+  function readAnalysisStore() {
     try {
-      localStorage.setItem(ANALYSIS_KEY, JSON.stringify(history));
+      const stored = JSON.parse(localStorage.getItem(ANALYSIS_KEY) || "null");
+      if (
+        stored &&
+        typeof stored === "object" &&
+        stored.queries &&
+        typeof stored.queries === "object" &&
+        !Array.isArray(stored.queries)
+      ) {
+        return stored;
+      }
+    } catch (_) {
+      /* fall through to an empty store */
+    }
+    return { version: 1, queries: {} };
+  }
+
+  function writeAnalysisStore(store) {
+    try {
+      localStorage.setItem(ANALYSIS_KEY, JSON.stringify(store));
     } catch (_) {
       /* localStorage may be unavailable in private mode; search still works. */
     }
   }
 
-  function renderSearch(data) {
+  function recordAnalysis(data) {
+    if (!data || data.out_of_scope) return null;
+    const normalized = data.normalized_query || String(data.query || "").trim().toLowerCase();
+    const queryId = queryIdFor(normalized, data.limit);
+    const now = new Date().toISOString();
+    const store = readAnalysisStore();
+    const entry = store.queries[queryId] || {
+      id: queryId,
+      query: data.query,
+      normalized,
+      limit: data.limit,
+      created_at: now,
+      updated_at: now,
+      methods: {},
+    };
+    entry.query = data.query;
+    entry.normalized = normalized;
+    entry.limit = data.limit;
+    entry.updated_at = now;
+    entry.methods[data.method] = {
+      method: data.method,
+      label: data.method_label,
+      db_execution_ms: Number(data.db_execution_ms) || 0,
+      result_count: data.result_count,
+      limit: data.limit,
+      cache_status: (data.cache || {}).status || null,
+      timestamp: now,
+    };
+    store.queries[queryId] = entry;
+    writeAnalysisStore(store);
+    return queryId;
+  }
+
+  function saveLastSearch(value) {
+    try {
+      localStorage.setItem(LAST_SEARCH_KEY, JSON.stringify(value));
+    } catch (_) {
+      /* localStorage may be unavailable; search still works. */
+    }
+  }
+
+  function readLastSearch() {
+    try {
+      const stored = JSON.parse(localStorage.getItem(LAST_SEARCH_KEY) || "null");
+      if (stored && typeof stored === "object" && stored.query) return stored;
+    } catch (_) {
+      /* ignore malformed state */
+    }
+    return null;
+  }
+
+  function renderSearch(data, analysisId) {
     state.lastSearch = data;
     const noticeBox = $("#searchNotice");
+    const analysisLink = $("#queryAnalysisLink");
 
     if (data.out_of_scope) {
       noticeBox.textContent = data.notice || "No products match this query.";
       noticeBox.hidden = false;
+      analysisLink.hidden = true;
       $("#performanceSection").hidden = true;
       $("#resultsSection").hidden = false;
       renderResults(data, "This query is outside the product catalogue, so no products are shown.");
@@ -239,6 +309,13 @@
     }
 
     noticeBox.hidden = true;
+    if (analysisId) {
+      analysisLink.href = `/analysis?q=${encodeURIComponent(analysisId)}`;
+      analysisLink.textContent = `View ${analysisId} analysis`;
+      analysisLink.hidden = false;
+    } else {
+      analysisLink.hidden = true;
+    }
     const cacheStatus = (data.cache || {}).status;
     const cacheBadge = $("#cacheBadge");
     if (cacheStatus) {
@@ -261,6 +338,13 @@
       { label: "Results", value: fmtNum(data.result_count), sub: `limit ${data.limit}` },
       { label: "Method", value: data.method_label, sub: data.method },
     ];
+    if (analysisId) {
+      metrics.push({
+        label: "Query ID",
+        value: analysisId,
+        sub: "open it in Analysis",
+      });
+    }
     if (cacheStatus) {
       metrics.push({
         label: "Cache",
@@ -375,6 +459,24 @@
       const radio = $('input[name="limit"][value="10"]');
       if (radio) radio.checked = true;
     }
+
+    // Returning from Analysis without URL parameters should keep the previous
+    // query so the user can change only the method and compare the same query.
+    if (!params.get("query") && !params.get("method")) {
+      const last = readLastSearch();
+      if (last) {
+        $("#queryInput").value = last.query || "";
+        if (last.method && state.methods.some((m) => m.id === last.method)) {
+          $("#methodSelect").value = last.method;
+          updateMethodHint();
+        }
+        if (Number(last.limit) === 10) {
+          const radio = $('input[name="limit"][value="10"]');
+          if (radio) radio.checked = true;
+        }
+      }
+    }
+
     if (params.get("autosearch") === "1" && $("#queryInput").value && $("#methodSelect").value) {
       await runSearch({ preventDefault: () => {} });
     }

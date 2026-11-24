@@ -61,7 +61,7 @@ endpoint never raises: if the database is unreachable it returns HTTP 503 with
 
 ## `GET /api/methods`
 
-Returns metadata for exactly six methods.
+Returns metadata for exactly seven methods.
 
 ```json
 {
@@ -81,7 +81,7 @@ Returns metadata for exactly six methods.
 
 Method IDs, in order:
 
-`full_scan`, `hash`, `composite_btree`, `hnsw`, `hybrid`, `cached`.
+`full_scan`, `btree`, `hash`, `composite_btree`, `hnsw`, `hybrid`, `cached`.
 
 ---
 
@@ -103,7 +103,7 @@ Runs exactly one selected method.
 | Field | Type | Required | Notes |
 |---|---|---|---|
 | `query` | string | yes | 1–500 characters |
-| `method` | string | yes | one of the six IDs |
+| `method` | string | yes | one of the seven IDs |
 | `limit` | integer | no | default 10; must be 5 or 10 |
 | `include_plan` | boolean | no | default `true`; `false` skips EXPLAIN |
 
@@ -206,7 +206,7 @@ Notes:
 Example error:
 
 ```json
-{"error": "Unknown method 'nope'. Choose one of: full_scan, hash, composite_btree, hnsw, hybrid, cached"}
+{"error": "Unknown method 'nope'. Choose one of: full_scan, btree, hash, composite_btree, hnsw, hybrid, cached"}
 ```
 
 ---
@@ -220,7 +220,7 @@ Runs repeated real measurements and returns raw samples plus statistics.
 ```json
 {
   "query": "Black laptop under 80000",
-  "methods": ["full_scan", "hash", "composite_btree", "hnsw", "hybrid", "cached"],
+  "methods": ["full_scan", "btree", "hash", "composite_btree", "hnsw", "hybrid", "cached"],
   "limit": 10,
   "repetitions": 5,
   "clear_cache": true,
@@ -232,7 +232,7 @@ Runs repeated real measurements and returns raw samples plus statistics.
 | Field | Type | Default | Notes |
 |---|---|---|---|
 | `query` | string | — | required |
-| `methods` | list | all six | non-empty, unique, known IDs |
+| `methods` | list | all seven | non-empty, unique, known IDs |
 | `limit` | integer | 10 | 5 or 10 |
 | `repetitions` | integer | 5 | 5–20 |
 | `clear_cache` | boolean | `true` | clears app cache before the cached method |

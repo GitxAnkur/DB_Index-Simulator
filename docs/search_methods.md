@@ -1,4 +1,4 @@
-# The Six Search Methods
+# The Seven Search Methods
 
 Every method is a separate module in `app/search/`, separately selectable in the UI,
 and separately benchmarked. The application never chooses a method automatically and
@@ -21,6 +21,9 @@ catalogue. A query is in scope when it names a category or brand, or when every
 keyword has a word-boundary match in the product text (practical synonyms allowed).
 Colour and price on their own are refinements, not scope. Out-of-scope queries return
 zero products without touching the database.
+
+Each search is also recorded against a **query ID** in the browser, so the Analysis
+page can compare every method that was manually run for that exact query.
 
 ---
 
@@ -63,7 +66,46 @@ controlled baseline, not a claim about PostgreSQL’s default plan for the same 
 
 ---
 
-## 2. Hash Index (`hash`)
+## 2. B+ Tree (`btree`)
+
+**Purpose:** demonstrate ordinary single-column B-tree indexes on equality and range
+predicates. PostgreSQL implements B-tree indexes, which serve the B+ tree concept.
+
+**Indexes available:**
+
+- `idx_products_category_btree (category)`
+- `idx_products_price_btree (price_inr)`
+- `idx_products_rating_btree (rating)`
+
+**Implementation:** identical relational SQL to `full_scan`, with no planner
+settings. PostgreSQL chooses the access path, and the actual plan is reported.
+
+**Observed plans:**
+
+| Query | Observed access path |
+|---|---|
+| Samsung smartphone | category B-tree + brand hash |
+| Laptops | `idx_products_category_btree` |
+| Laptop under 80000 | `idx_products_category_btree` |
+| Black laptop under 80000 | composite B-tree |
+| Wireless headphones for travel | category B-tree + `ILIKE` filters |
+
+**Key observation:** the planner is free to use the composite index even in the
+“B+ Tree” method, because all indexes are present in the same schema. This is reported
+as-is. The method label describes the *intended* index family, not a restriction on
+the planner.
+
+**Why some B-tree queries are slow:** `ILIKE '%keyword%'` cannot use a normal
+B-tree. Once the category index produces ~10,000 candidate rows, every row must be
+checked against several text patterns. That dominates the runtime.
+
+**Limitation:** a B-tree does not accelerate leading-wildcard text search. A
+trigram/GIN index would be the appropriate structure for that workload and is outside
+this project’s seven methods.
+
+---
+
+## 3. Hash Index (`hash`)
 
 **Purpose:** show the equality-only behaviour of PostgreSQL hash indexes.
 
@@ -77,7 +119,7 @@ applicable.
 
 | Query | Brand parsed | Observed access path |
 |---|---|---|
-| Samsung smartphone | Samsung | `idx_products_brand_hash` + `idx_products_category_btree` |
+| Samsung smartphone | Samsung | `idx_products_brand_hash` + category B-tree |
 | Black laptop under 80000 | none | composite index (hash not applicable) |
 | Laptops | none | category B-tree |
 
@@ -101,7 +143,7 @@ durability and replication behaviour are not being evaluated.
 
 ---
 
-## 3. Composite Index (`composite_btree`)
+## 4. Composite Index (`composite_btree`)
 
 **Purpose:** demonstrate a multicolumn index and the leading-column rule.
 
@@ -140,7 +182,7 @@ range. This is a deliberate teaching example of column-order trade-offs.
 
 ---
 
-## 4. HNSW Vector Search (`hnsw`)
+## 5. HNSW Vector Search (`hnsw`)
 
 **Purpose:** approximate nearest-neighbour semantic retrieval over real embeddings.
 
@@ -180,8 +222,7 @@ time. Embedding time is reported separately in the API and is not shown as part 
 search performance in the UI.
 
 **Approximation:** HNSW is approximate. Recall depends on `m`, `ef_construction`,
-and `ef_search`; this project does not claim exact nearest neighbours. With 100,000
-vectors and `ef_search = 100`, results are stable across repetitions in practice.
+and `ef_search`; this project does not claim exact nearest neighbours.
 
 **Result semantics:** cosine similarity is displayed as a percentage. HNSW results
 are not directly comparable to relational results because there are no structured
@@ -189,7 +230,7 @@ filters and ordering is semantic, not by rating/price.
 
 ---
 
-## 5. Hybrid (Filters + Vector) (`hybrid`)
+## 6. Hybrid (Filters + Vector) (`hybrid`)
 
 **Purpose:** combine hard structured filters with semantic ranking.
 
@@ -218,8 +259,7 @@ or short result set. Hybrid therefore sets:
 SET LOCAL hnsw.iterative_scan = relaxed_order;
 ```
 
-so pgvector keeps traversing the graph until enough filtered rows are found. This is
-why hybrid returns a full result set even when the structured filter is narrow.
+so pgvector keeps traversing the graph until enough filtered rows are found.
 
 **Observed plans:** the planner may use the HNSW index, one or more relational indexes,
 or both. The actual plan is reported by the API; no index usage is claimed without
@@ -234,7 +274,7 @@ ordering and applies semantic ranking; it also incurs embedding time.
 
 ---
 
-## 6. Cached Search (`cached`)
+## 7. Cached Search (`cached`)
 
 **Purpose:** demonstrate application-level caching and cache-hit behaviour.
 
@@ -265,20 +305,18 @@ and its trade-off (state, staleness, memory) is worth measuring.
 
 Fixed suite, representative plans (5 repetitions, limit 10):
 
-| Query | Full scan | Hash | Composite | HNSW | Hybrid |
-|---|---|---|---|---|---|
-| Samsung smartphone | Seq Scan | category + brand hash | composite | HNSW | category + brand hash |
-| Laptops | Seq Scan | category | composite | HNSW | HNSW |
-| Laptop under 80000 | Seq Scan | category | composite | HNSW | HNSW |
-| Black laptop under 80000 | Seq Scan | category | composite | HNSW | composite |
-| Lightweight laptop for programming | Seq Scan | category | composite | HNSW | HNSW |
-| Wireless headphones for travel | Seq Scan | category | composite | HNSW | HNSW |
-| Gaming monitor under 30000 | Seq Scan | category | composite | HNSW | HNSW |
+| Query | Full scan | B+ Tree | Hash | Composite | HNSW | Hybrid |
+|---|---|---|---|---|---|---|
+| Samsung smartphone | Seq Scan | category + brand hash | category + brand hash | composite | HNSW | category + brand hash |
+| Laptops | Seq Scan | category | category | composite | HNSW | HNSW |
+| Laptop under 80000 | Seq Scan | category | category | composite | HNSW | HNSW |
+| Black laptop under 80000 | Seq Scan | composite | category | composite | HNSW | composite |
+| Wireless headphones for travel | Seq Scan | category | category | composite | HNSW | HNSW |
+| Gaming monitor under 30000 | Seq Scan | category | category | composite | HNSW | HNSW |
 
-The single-column B-tree indexes on `price_inr`, `category`, and `rating` remain part
-of the schema and are chosen by the planner where useful, but there is no longer a
-separate selectable B-tree method. The composite index is the explicit relational
-method; full scans and the hash index remain for comparison.
+The single-column B-tree indexes remain part of the schema and are exercised by both
+the B+ Tree method and the planner’s natural choices. The composite index is the
+explicit multicolumn method.
 
 This table is generated from `data/benchmark_results.json`; the actual plan JSON for
 every method and query is stored there and can be requested through the API.

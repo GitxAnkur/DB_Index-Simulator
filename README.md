@@ -2,7 +2,7 @@
 
 **Product Search Engine: A Comparative Study of Database Indexing Techniques**
 
-A full-stack DBMS academic project that compares six database search and retrieval
+A full-stack DBMS academic project that compares seven database search and retrieval
 techniques on exactly **100,000 synthetic products** using **PostgreSQL**, **pgvector**,
 **Sentence Transformers**, **Flask**, and **Chart.js**.
 
@@ -20,39 +20,36 @@ against PostgreSQL; query plans come from `EXPLAIN (ANALYZE, BUFFERS, FORMAT JSO
 | PostgreSQL schema + constraints | Implemented |
 | pgvector + 384-dimensional embeddings | 100,000 real embeddings generated |
 | HNSW vector index | Built (`m=16`, `ef_construction=64`) |
-| Six separately selectable methods | Implemented and tested |
+| Seven separately selectable methods | Implemented and tested |
 | Natural-language parser | Categories, brands, colours, prices, use cases, keywords |
 | Flask API | Search, benchmark, health, cache, CSV export |
 | Frontend | Responsive search + simple analysis dashboard with Chart.js |
 | Repeated benchmark experiments | ≥ 5 repetitions, raw samples, statistics (API) |
 | Query-plan inspection | `EXPLAIN` available through the API and test suite |
 | CSV export | Per-run API export + fixed-suite CSV |
-| Pytest suite | 98 tests passing against the real database |
+| Pytest suite | 101 tests passing against the real database |
 | Documentation | README, setup, architecture, API, methods, methodology, report |
 
-## Six search methods
+## Seven search methods
 
 1. **Full Table Scan** — sequential-scan baseline with index and bitmap scans
    deliberately disabled for the measurement.
-2. **Hash Index** — PostgreSQL hash index on `brand`; equality only. Queries without
+2. **B+ Tree** — PostgreSQL B-tree indexes on `price_inr`, `category`, and `rating`;
+   equality and range predicates. The planner chooses the actual index.
+3. **Hash Index** — PostgreSQL hash index on `brand`; equality only. Queries without
    a brand explicitly report that the hash index is not applicable.
-3. **Composite Index** — multicolumn B-tree on `(category, price_inr, color)`;
+4. **Composite Index** — multicolumn B-tree on `(category, price_inr, color)`;
    demonstrates the leading-column rule and orders results along the index columns.
-4. **HNSW Vector Search** — cosine-distance approximate nearest-neighbour search
+5. **HNSW Vector Search** — cosine-distance approximate nearest-neighbour search
    over real Sentence Transformers embeddings.
-5. **Hybrid (Filters + Vector)** — structured SQL filters combined with semantic
+6. **Hybrid (Filters + Vector)** — structured SQL filters combined with semantic
    ranking, using iterative HNSW scanning when filters are selective. The actual plan
    shows which indexes PostgreSQL used.
-6. **Cached Search** — application-level TTL/LRU cache in front of hybrid search;
+7. **Cached Search** — application-level TTL/LRU cache in front of hybrid search;
    demonstrates cache miss, hit, repeated queries, clearing, and separate hit timing.
 
 The user must manually select the search method. The application never auto-selects
 the “fastest” method.
-
-The single-column B-tree indexes on `price_inr`, `category`, and `rating` remain part
-of the schema and are used by the planner, but they are no longer exposed as a separate
-selectable method. The composite method is the only explicitly indexed relational
-method.
 
 ### Scope behaviour
 
@@ -94,11 +91,12 @@ dbms_2/
 │       ├── __init__.py          # Dispatcher and response assembly
 │       ├── base.py              # Shared SQL/execution helpers
 │       ├── full_scan.py         # Method 1
-│       ├── hash_index.py        # Method 2
-│       ├── composite_btree.py   # Method 3
-│       ├── hnsw.py              # Method 4
-│       ├── hybrid.py            # Method 5
-│       └── cached.py            # Method 6
+│       ├── btree.py             # Method 2
+│       ├── hash_index.py        # Method 3
+│       ├── composite_btree.py   # Method 4
+│       ├── hnsw.py              # Method 5
+│       ├── hybrid.py            # Method 6
+│       └── cached.py            # Method 7
 ├── templates/
 │   ├── index.html               # Search page
 │   └── analysis.html            # Analysis dashboard
@@ -116,7 +114,7 @@ dbms_2/
 │   ├── run_benchmarks.py
 │   ├── start_postgres.sh
 │   └── stop_postgres.sh
-├── tests/                       # 98 pytest tests
+├── tests/                       # 101 pytest tests
 ├── data/                        # Validation and benchmark JSON
 ├── docs/                        # Reports, guides, CSV, screenshots
 ├── synthetic_products_100000.csv
@@ -201,7 +199,7 @@ python scripts/run_benchmarks.py
 
 | Endpoint | Purpose |
 |---|---|
-| `POST /api/search` | Run one of the six methods |
+| `POST /api/search` | Run one of the seven methods |
 | `POST /api/benchmark` | Repeated measurements + statistics |
 | `POST /api/benchmark/export` | Run a benchmark and download CSV |
 | `GET /api/benchmark/suite` | Fixed seven-query suite |
@@ -234,8 +232,9 @@ Representative warm timings on this machine (Top 5, `include_plan: false`):
 
 | Method | Typical DB execution time |
 |---|---:|
-| Full Table Scan | ~9.4–9.9 ms |
-| Hash Index (brand present) | ~0.6–0.7 ms |
+| Full Table Scan | ~9.4–10.7 ms |
+| B+ Tree | ~1.2 ms |
+| Hash Index (brand present) | ~0.6–1.2 ms |
 | Composite Index | ~0.57 ms |
 | HNSW Vector Search | ~1.4–1.8 ms |
 | Hybrid (Filters + Vector) | ~1.4–1.6 ms |
@@ -245,11 +244,13 @@ These are actual measurements, not hardcoded values. HNSW/hybrid database times
 exclude query-embedding time. Repeated identical searches are stable because the
 interactive path runs one query and performs no plan capture.
 
-## Analysis page
+## Query-specific analysis page
 
-The `/analysis` page reads the most recent measurement for each method from the
-browser's `localStorage` and renders a Chart.js bar graph plus a table. Nothing is
-sent to a server; clearing browser storage clears the history.
+Each query gets a stable query ID. Running the same query with another method adds
+that method to the same query's graph; changing the query creates a new graph. The
+`/analysis` page lists every saved query below the graph, and tapping a query ID
+reopens its chart and method table. Everything is stored only in the browser's
+`localStorage`; nothing is sent to a server.
 
 ## Testing
 
@@ -258,8 +259,8 @@ source .venv/bin/activate
 pytest -q
 ```
 
-Result on this machine: **98 passed**. The suite exercises the real database:
-dataset integrity, all six methods, parser and scope behaviour, result limits, invalid
+Result on this machine: **101 passed**. The suite exercises the real database:
+dataset integrity, all seven methods, parser and scope behaviour, result limits, invalid
 requests, SQL parameterisation/injection safety, cache hit/miss/clear/TTL/LRU,
 vector and hybrid search, benchmark statistics, CSV export, and API errors.
 
@@ -271,7 +272,7 @@ See `docs/testing.md`.
 - `docs/database_setup.md` — schema, import, indexes, verification
 - `docs/architecture.md` — system architecture and request flow
 - `docs/api.md` — API reference
-- `docs/search_methods.md` — six methods and observed plans
+- `docs/search_methods.md` — seven methods and observed plans
 - `docs/benchmark_methodology.md` — measurement methodology and validity
 - `docs/testing.md` — test plan and results
 - `docs/validation_report.md` — dataset validation

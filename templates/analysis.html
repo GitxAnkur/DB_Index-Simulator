@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Analysis · Indexed Product Search</title>
-  <meta name="description" content="Database execution time for each search method you have tested." />
+  <meta name="description" content="Compare how each search method performed on a specific query." />
   <link rel="stylesheet" href="/static/css/style.css" />
 </head>
 <body>
@@ -25,10 +25,11 @@
 
   <header class="hero hero-compact">
     <div class="wrap">
-      <p class="eyebrow">Measured in this browser</p>
-      <h1>Analysis</h1>
+      <p class="eyebrow">One query · every method you tried</p>
+      <h1>Query analysis</h1>
       <p class="subtitle">
-        Database execution time for every search method you have tested. Each bar is the most recent measurement for that method.
+        Every query gets its own ID. Run the same query with different methods to
+        compare how each index performed on that exact query.
       </p>
     </div>
   </header>
@@ -37,24 +38,33 @@
     <section class="panel" aria-labelledby="analysisTitle">
       <div class="panel-heading">
         <div>
-          <p class="section-kicker">Index comparison</p>
+          <p class="section-kicker">Selected query</p>
           <h2 id="analysisTitle">Database execution time by method</h2>
-          <p class="muted">Run searches on the search page, then return here to compare the latest timings.</p>
+          <p class="muted">Only methods you personally ran for this query are shown.</p>
         </div>
-        <button id="clearHistoryBtn" class="btn btn-secondary btn-small" type="button">Clear history</button>
+        <button id="clearHistoryBtn" class="btn btn-secondary btn-small" type="button">Clear all analyses</button>
       </div>
 
       <div id="analysisEmpty" class="empty-state" hidden>
-        No searches recorded yet. Go to the <a href="/">search page</a>, choose a method, and run a query.
+        No query analyses yet. Go to the <a href="/">search page</a>, run a query,
+        then change the method and run the same query again.
       </div>
 
-      <div id="analysisContent" hidden>
+      <div id="analysisDetail" hidden>
+        <div class="query-detail-head">
+          <span id="detailQueryId" class="query-id-badge"></span>
+          <div class="query-detail-copy">
+            <h3 id="detailQueryText"></h3>
+            <p id="detailMeta" class="muted"></p>
+          </div>
+        </div>
+
         <div class="metric-grid" id="analysisSummary"></div>
 
         <div class="chart-card">
           <div class="chart-head">
             <div>
-              <h3>Latest database execution time</h3>
+              <h3>How each method performed on this query</h3>
               <p class="muted">Milliseconds spent inside PostgreSQL for the actual search query.</p>
             </div>
           </div>
@@ -64,8 +74,8 @@
         <div class="table-card">
           <div class="chart-head">
             <div>
-              <h3>Tested methods</h3>
-              <p class="muted">The most recent query and measurement for each method.</p>
+              <h3>Measured methods</h3>
+              <p class="muted">Latest result for each method you ran against this query.</p>
             </div>
           </div>
           <div class="table-scroll">
@@ -73,9 +83,9 @@
               <thead>
                 <tr>
                   <th>Method</th>
-                  <th>Last query</th>
                   <th class="num">DB time</th>
                   <th class="num">Results</th>
+                  <th>Cache</th>
                   <th>Measured</th>
                 </tr>
               </thead>
@@ -85,12 +95,24 @@
         </div>
       </div>
     </section>
+
+    <section id="queryListPanel" class="panel" aria-labelledby="queryListTitle" hidden>
+      <div class="panel-heading compact">
+        <div>
+          <p class="section-kicker">Saved queries</p>
+          <h2 id="queryListTitle">All query analyses</h2>
+          <p class="muted">Tap a query ID to open its graph.</p>
+        </div>
+        <span id="queryCount" class="pill pill-soft"></span>
+      </div>
+      <div id="queryList" class="query-list"></div>
+    </section>
   </main>
 
   <footer class="footer">
     <div class="wrap footer-inner">
       <span>Indexed Product Search</span>
-      <span>History is stored only in this browser</span>
+      <span>Analyses are stored only in this browser</span>
     </div>
   </footer>
 

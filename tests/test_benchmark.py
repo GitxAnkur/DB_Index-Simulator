@@ -15,16 +15,16 @@ def test_health_reports_database_and_dataset(client):
     assert data["database"]["product_count"] == 100_000
     assert data["database"]["embedded_count"] == 100_000
     assert data["database"]["pgvector_version"] == "0.8.7"
-    assert len(data["methods"]) == 6
+    assert len(data["methods"]) == 7
     assert data["dataset_validation"]["all_checks_passed"] is True
     assert any(i["indexname"] == "idx_products_embedding_hnsw" for i in data["database"]["indexes"])
 
 
-def test_methods_endpoint_lists_exactly_six(client):
+def test_methods_endpoint_lists_exactly_seven(client):
     data = client.get("/api/methods").get_json()
     ids = [m["id"] for m in data["methods"]]
     assert ids == [
-        "full_scan", "hash", "composite_btree", "hnsw", "hybrid", "cached",
+        "full_scan", "btree", "hash", "composite_btree", "hnsw", "hybrid", "cached",
     ]
 
 
@@ -38,7 +38,7 @@ def test_benchmark_suite_endpoint(client):
 def test_benchmark_repetitions_and_statistics(client):
     payload = {
         "query": "Laptop under 80000",
-        "methods": ["full_scan", "hash", "composite_btree", "hnsw", "hybrid", "cached"],
+        "methods": ["full_scan", "btree", "hash", "composite_btree", "hnsw", "hybrid", "cached"],
         "limit": 5,
         "repetitions": 5,
         "clear_cache": True,
@@ -47,8 +47,8 @@ def test_benchmark_repetitions_and_statistics(client):
     response = client.post("/api/benchmark", json=payload)
     assert response.status_code == 200
     data = response.get_json()
-    assert len(data["methods"]) == 6
-    assert len(data["comparison_table"]) == 6
+    assert len(data["methods"]) == 7
+    assert len(data["comparison_table"]) == 7
     for method in data["methods"]:
         assert method["repetitions"] == 5
         assert len(method["samples"]) == 5
@@ -104,7 +104,7 @@ def test_benchmark_rejects_empty_method_list(client):
 def test_benchmark_csv_export(client):
     payload = {
         "query": "Laptop under 80000",
-        "methods": ["full_scan", "composite_btree"],
+        "methods": ["full_scan", "btree"],
         "limit": 5,
         "repetitions": 5,
         "clear_cache": True,
@@ -116,7 +116,7 @@ def test_benchmark_csv_export(client):
     assert "attachment" in response.headers["Content-Disposition"]
     rows = list(csv.DictReader(io.StringIO(response.get_data(as_text=True))))
     assert len(rows) == 10
-    assert {row["method"] for row in rows} == {"full_scan", "composite_btree"}
+    assert {row["method"] for row in rows} == {"full_scan", "btree"}
     assert all(row["db_execution_ms"] for row in rows)
     assert all(row["median_ms"] for row in rows)
 

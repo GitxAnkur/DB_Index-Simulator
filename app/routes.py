@@ -139,7 +139,7 @@ def search():
     if not isinstance(query, str) or not query.strip():
         return error("'query' must be a non-empty string")
     if not isinstance(method, str) or not method:
-        return error("'method' must be one of the six supported method identifiers")
+        return error("'method' must be one of the seven supported method identifiers")
     if not isinstance(limit, int) or isinstance(limit, bool):
         return error("'limit' must be an integer (5 or 10)")
     if not isinstance(include_plan, bool):

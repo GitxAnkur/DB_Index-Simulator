@@ -27,7 +27,7 @@ Flask app (run.py → app.create_app)
         │      │
         │      ├── query_parser.py ─ natural-language → ParsedQuery
         │      ├── embeddings.py ─── Sentence Transformers (384-d, CPU)
-        │      ├── search/ ───────── six method modules + dispatcher
+        │      ├── search/ ───────── seven method modules + dispatcher
         │      ├── benchmark.py ──── repetitions, statistics, CSV
         │      ├── cache.py ──────── TTL/LRU application cache
         │      └── plan.py ───────── EXPLAIN JSON normaliser
@@ -44,7 +44,7 @@ PostgreSQL 19 + pgvector 0.8.7
 
 `POST /api/search`:
 
-1. **Validate** the JSON body: `query` non-empty string, `method` one of six,
+1. **Validate** the JSON body: `query` non-empty string, `method` one of seven,
    `limit` in `(5, 10)`, `include_plan` boolean.
 2. **Parse** the query (`query_parser.parse_query`) into a `ParsedQuery`:
    category, brand, colour, min/max price, use case, keywords, original and
@@ -119,20 +119,18 @@ The benchmark deliberately does **not** hide failed runs: `successful_runs`,
 | `app/search/base.py` | Shared SQL fragments, parameterised execution, EXPLAIN capture |
 | `app/search/*.py` | One module per method |
 
-## 6. The six methods
+## 6. The seven methods
 
 | Method | SQL shape | Expected access path |
 |---|---|---|
 | `full_scan` | Structured `WHERE` + keyword `ILIKE`, index scans disabled | Seq Scan |
+| `btree` | Same `WHERE`, planner free to choose | B-tree on category/price/rating |
 | `hash` | Same `WHERE`, brand equality emphasized | Hash index on brand when present |
 | `composite_btree` | Same `WHERE`, ordered by `price_inr, color` | `(category, price_inr, color)` B-tree |
 | `hnsw` | `ORDER BY embedding <=> %s::vector LIMIT %s` | HNSW index |
 | `hybrid` | Structured filters **and** vector `ORDER BY`, iterative HNSW | Relational index and/or HNSW, whatever the planner chooses |
 | `cached` | TTL/LRU lookup around hybrid | No DB on a hit |
 
-The standalone single-column B-tree method was removed. The B-tree indexes on
-`price_inr`, `category`, and `rating` remain in the schema and are selected by the
-planner where useful, but only the composite index is an explicit relational method.
 
 The “expected” index is metadata, not a guarantee. The actual `EXPLAIN` output is
 always shown, and warnings are emitted when the expected access path is not used
@@ -217,8 +215,9 @@ Two pages:
    Top 5/10 radio buttons, inline method hint, metric cards (DB execution time,
    result count, method, cache state), parsed-filter chips, warnings, and product
    cards. Out-of-scope queries show a notice and zero products.
-2. **Analysis** (`templates/analysis.html`) — reads the latest measurement per method
-   from `localStorage` and renders a Chart.js bar graph plus a comparison table.
+2. **Analysis** (`templates/analysis.html`) — groups measurements by query ID. The
+   selected query's chart compares only the methods that were manually run for it,
+   and a list of all saved queries appears below; tapping a query reopens its graph.
 
 The benchmark API remains available for academic measurement, but there is no
 benchmark dashboard in the UI and no “under the hood” SQL/plan panel.
