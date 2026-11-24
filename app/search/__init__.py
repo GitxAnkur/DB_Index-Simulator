@@ -1,5 +1,5 @@
 """Search dispatcher: validates the selected method and assembles the API
-response. Seven methods remain separately selectable and separately measured.
+response. Six methods remain separately selectable and separately measured.
 """
 from __future__ import annotations
 
@@ -11,12 +11,11 @@ import numpy as np
 
 from ..config import Config
 from ..embeddings import encode_query
-from ..query_parser import ParsedQuery, parse_query
-from . import btree, cached, composite_btree, full_scan, hash_index, hnsw, hybrid
+from ..query_parser import ParsedQuery, keywords_match_exists, parse_query
+from . import cached, composite_btree, full_scan, hash_index, hnsw, hybrid
 
 METHOD_MODULES = {
     "full_scan": full_scan,
-    "btree": btree,
     "hash": hash_index,
     "composite_btree": composite_btree,
     "hnsw": hnsw,
@@ -26,7 +25,6 @@ METHOD_MODULES = {
 
 METHOD_ORDER = [
     "full_scan",
-    "btree",
     "hash",
     "composite_btree",
     "hnsw",
@@ -40,20 +38,15 @@ COMPARABILITY = {
         "group": "relational",
         "note": "Same parsed filters and keyword predicate as the other relational methods; index scans are disabled by design.",
     },
-    "btree": {
-        "comparable": True,
-        "group": "relational",
-        "note": "Same parsed filters and keyword predicate as the relational baseline; the planner chooses indexes naturally.",
-    },
     "hash": {
         "comparable": True,
         "group": "relational",
-        "note": "Same query as the relational baseline; hash index applies only when a brand equality predicate exists.",
+        "note": "Same query as the relational baseline; the hash index applies only when a brand equality predicate exists.",
     },
     "composite_btree": {
         "comparable": True,
         "group": "relational",
-        "note": "Same query as the relational baseline; the composite index applies only when category is constrained.",
+        "note": "Same query as the relational baseline; the composite index applies when category is constrained.",
     },
     "hnsw": {
         "comparable": False,
@@ -103,6 +96,12 @@ def validate_limit(limit: int) -> None:
         )
 
 
+OUT_OF_SCOPE_NOTICE = (
+    "No products in this catalogue match that query. Try a product category, "
+    "brand, colour, price range, or a feature such as \u201cwireless headphones\u201d."
+)
+
+
 def _warnings(method: str, outcome: dict, parsed: ParsedQuery) -> list[str]:
     warnings: list[str] = []
     plan = outcome.get("plan") or {}
@@ -118,11 +117,6 @@ def _warnings(method: str, outcome: dict, parsed: ParsedQuery) -> list[str]:
         warnings.append(
             "No category was parsed. Category is the leading column of the "
             "composite index, so the index is not applicable."
-        )
-    if method == "btree" and plan and not indexes:
-        warnings.append(
-            "The planner chose no index for this query; see the EXPLAIN plan. "
-            "This can happen when the filter is not selective enough."
         )
     if method == "hnsw" and plan and not indexes:
         warnings.append(
@@ -168,12 +162,60 @@ def run_search(
         parse_ms = (time.perf_counter() - parse_started) * 1000
     parse_ms = parse_ms or 0.0
 
+    module = METHOD_MODULES[method]
+
+    # Scope gate. A query must either name a category or brand, or contain
+    # keywords that all exist in the catalogue. Colour and price are refinements,
+    # not scope on their own: "blue shirt" must not return every blue product.
+    # This stops unrelated prompts from receiving arbitrary nearest neighbours
+    # from the vector methods and stops relational methods from scanning the
+    # whole table for a query the catalogue cannot answer.
+    if not (parsed.category or parsed.brand) and not keywords_match_exists(parsed.keywords):
+        server_total_ms = (time.perf_counter() - wall_started) * 1000
+        return {
+            "query": parsed.original_query,
+            "normalized_query": parsed.normalized_query,
+            "method": method,
+            "method_label": module.LABEL,
+            "method_description": module.DESCRIPTION,
+            "limit": limit,
+            "execution_ms": round(parse_ms, 3),
+            "db_execution_ms": 0.0,
+            "embedding_ms": 0.0,
+            "parse_ms": round(parse_ms, 3),
+            "server_total_ms": round(server_total_ms, 3),
+            "result_count": 0,
+            "results": [],
+            "parsed_filters": parsed.to_dict(),
+            "cache": None,
+            "technical": {
+                "sql": None,
+                "params": [],
+                "planner_settings": [],
+                "explain": None,
+                "indexes_used": [],
+                "rows_processed": None,
+                "buffers": None,
+                "plan_capture_ms": 0.0,
+                "explain_error": None,
+                "method_details": {},
+                "fallback": None,
+                "vector_info": None,
+                "cache": None,
+                "expected_index": module.EXPECTED_INDEX,
+            },
+            "comparability": COMPARABILITY[method],
+            "warnings": [],
+            "notice": OUT_OF_SCOPE_NOTICE,
+            "out_of_scope": True,
+            "timestamp_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        }
+
     if method in {"hnsw", "hybrid"} and query_embedding is None:
         query_embedding, embedding_ms = encode_query(parsed.original_query)
     if embedding_ms is None:
         embedding_ms = 0.0
 
-    module = METHOD_MODULES[method]
     if method in {"hnsw", "hybrid"}:
         outcome = module.search(
             parsed, limit, include_plan=include_plan, query_embedding=query_embedding
@@ -194,7 +236,7 @@ def run_search(
         "sql": outcome.get("sql"),
         "params": outcome.get("params"),
         "planner_settings": outcome.get("planner_settings", []),
-        "explain": plan,
+        "explain": outcome.get("plan"),
         "indexes_used": plan.get("indexes_used", []),
         "rows_processed": plan.get("rows_returned_by_root"),
         "buffers": plan.get("buffers"),
@@ -226,6 +268,8 @@ def run_search(
         "technical": technical,
         "comparability": COMPARABILITY[method],
         "warnings": _warnings(method, outcome, parsed),
+        "notice": None,
+        "out_of_scope": False,
         "timestamp_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
     }
     return result

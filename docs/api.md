@@ -61,14 +61,14 @@ endpoint never raises: if the database is unreachable it returns HTTP 503 with
 
 ## `GET /api/methods`
 
-Returns metadata for exactly seven methods.
+Returns metadata for exactly six methods.
 
 ```json
 {
   "methods": [
     {
       "id": "full_scan",
-      "label": "Normal Search / Full Table Scan",
+      "label": "Full Table Scan",
       "description": "...",
       "expected_index": "no index (sequential scan)",
       "comparable": true,
@@ -81,7 +81,7 @@ Returns metadata for exactly seven methods.
 
 Method IDs, in order:
 
-`full_scan`, `btree`, `hash`, `composite_btree`, `hnsw`, `hybrid`, `cached`.
+`full_scan`, `hash`, `composite_btree`, `hnsw`, `hybrid`, `cached`.
 
 ---
 
@@ -103,7 +103,7 @@ Runs exactly one selected method.
 | Field | Type | Required | Notes |
 |---|---|---|---|
 | `query` | string | yes | 1–500 characters |
-| `method` | string | yes | one of the seven IDs |
+| `method` | string | yes | one of the six IDs |
 | `limit` | integer | no | default 10; must be 5 or 10 |
 | `include_plan` | boolean | no | default `true`; `false` skips EXPLAIN |
 
@@ -114,7 +114,7 @@ Runs exactly one selected method.
   "query": "Black laptop under 80000",
   "normalized_query": "black laptop under 80000",
   "method": "composite_btree",
-  "method_label": "Composite B+ Tree Search",
+  "method_label": "Composite Index",
   "limit": 5,
   "execution_ms": 1.42,
   "db_execution_ms": 1.18,
@@ -191,9 +191,10 @@ Notes:
   `db_execution_ms`.
 - `technical.sql` contains only `%s` placeholders; user values are in
   `technical.params`.
-- `warnings` reports non-applicable indexes, fallbacks, cache hits, and missing
-  expected indexes.
-- `technical.fallback` is non-null when a relational keyword filter was relaxed.
+- `warnings` reports non-applicable indexes, cache hits, and missing expected indexes.
+- `technical.fallback` is always `null`; there is no keyword-relaxation fallback.
+- Out-of-scope queries return `out_of_scope: true`, `result_count: 0`,
+  `db_execution_ms: 0`, `technical.sql: null`, and a `notice` string.
 
 **Errors:**
 
@@ -205,7 +206,7 @@ Notes:
 Example error:
 
 ```json
-{"error": "Unknown method 'nope'. Choose one of: full_scan, btree, hash, composite_btree, hnsw, hybrid, cached"}
+{"error": "Unknown method 'nope'. Choose one of: full_scan, hash, composite_btree, hnsw, hybrid, cached"}
 ```
 
 ---
@@ -219,7 +220,7 @@ Runs repeated real measurements and returns raw samples plus statistics.
 ```json
 {
   "query": "Black laptop under 80000",
-  "methods": ["full_scan", "btree", "hash", "composite_btree", "hnsw", "hybrid", "cached"],
+  "methods": ["full_scan", "hash", "composite_btree", "hnsw", "hybrid", "cached"],
   "limit": 10,
   "repetitions": 5,
   "clear_cache": true,
@@ -231,7 +232,7 @@ Runs repeated real measurements and returns raw samples plus statistics.
 | Field | Type | Default | Notes |
 |---|---|---|---|
 | `query` | string | — | required |
-| `methods` | list | all seven | non-empty, unique, known IDs |
+| `methods` | list | all six | non-empty, unique, known IDs |
 | `limit` | integer | 10 | 5 or 10 |
 | `repetitions` | integer | 5 | 5–20 |
 | `clear_cache` | boolean | `true` | clears app cache before the cached method |
@@ -253,7 +254,7 @@ Runs repeated real measurements and returns raw samples plus statistics.
   "methods": [
     {
       "method": "full_scan",
-      "label": "Normal Search / Full Table Scan",
+      "label": "Full Table Scan",
       "repetitions": 5,
       "warmup_runs": 1,
       "warmup_ms": 10.1,
@@ -309,7 +310,7 @@ Runs repeated real measurements and returns raw samples plus statistics.
   "comparison_table": [
     {
       "method": "full_scan",
-      "label": "Normal Search / Full Table Scan",
+      "label": "Full Table Scan",
       "median_ms": 9.33,
       "mean_ms": 9.45,
       "min_ms": 9.11,

@@ -367,3 +367,33 @@ select:focus, input[type="text"]:focus { outline: none; border-color: var(--prim
   .method-checkbox-grid { grid-template-columns: 1fr; }
   .footer-inner { flex-direction: column; gap: 4px; }
 }
+
+/* Navigation */
+.topbar-nav { display: flex; align-items: center; gap: 4px; margin-right: 6px; }
+.nav-link {
+  color: #cbd5e1; text-decoration: none; font-size: 0.78rem; font-weight: 640;
+  padding: 7px 11px; border-radius: 8px; border: 1px solid transparent;
+  transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+}
+.nav-link:hover { color: #fff; background: rgba(148, 163, 184, 0.12); }
+.nav-link.active { color: #c7d2fe; background: rgba(99, 102, 241, 0.18); border-color: rgba(99, 102, 241, 0.35); }
+
+/* Secondary page hero */
+.hero-compact { padding: 42px 0 30px; }
+.hero-compact h1 { margin-bottom: 10px; }
+
+/* Analysis */
+#analysisTable { width: 100%; border-collapse: collapse; font-size: 0.8rem; min-width: 620px; }
+#analysisTable th, #analysisTable td { padding: 9px 10px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+#analysisTable th { color: var(--muted); font-size: 0.67rem; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 720; background: #fbfcff; }
+#analysisTable tbody tr:hover { background: #f8faff; }
+#analysisTable .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+#analysisTable td.method-cell { font-weight: 650; color: var(--ink-2); white-space: nowrap; }
+.empty-state a { color: var(--primary); font-weight: 650; }
+
+@media (max-width: 640px) {
+  .topbar-right { gap: 6px; }
+  .topbar-nav { margin-right: 0; }
+  .nav-link { padding: 6px 8px; font-size: 0.72rem; }
+  .hero-compact { padding: 30px 0 22px; }
+}

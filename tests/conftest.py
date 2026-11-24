@@ -5,6 +5,7 @@ import pytest
 
 from app import create_app, db
 from app.cache import cache
+from app.config import TestConfig
 from app.embeddings import get_model
 from app.query_parser import reset_lexicon
 
@@ -13,7 +14,7 @@ from app.query_parser import reset_lexicon
 def app():
     # Avoid a race between the background warm-up thread and the first test.
     get_model()
-    application = create_app()
+    application = create_app(TestConfig)
     application.config.update(TESTING=True)
     yield application
     db.close_pool()

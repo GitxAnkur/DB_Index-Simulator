@@ -21,8 +21,16 @@ def test_root_page_serves_frontend(client):
     assert response.status_code == 200
     body = response.get_data(as_text=True)
     assert "Indexed Product Search" in body
-    assert "Benchmark dashboard" in body
-    assert "chart.umd.min.js" in body
+    assert "Database execution time" in body
+    assert "/analysis" in body
+
+
+def test_analysis_page_serves_frontend(client):
+    response = client.get("/analysis")
+    assert response.status_code == 200
+    body = response.get_data(as_text=True)
+    assert "Analysis" in body
+    assert "analysis.js" in body
 
 
 def test_database_connection_and_extension():

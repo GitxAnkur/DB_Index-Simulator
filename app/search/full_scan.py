@@ -11,7 +11,7 @@ from ..query_parser import ParsedQuery
 from .base import execute_relational
 
 METHOD = "full_scan"
-LABEL = "Normal Search / Full Table Scan"
+LABEL = "Full Table Scan"
 DESCRIPTION = (
     "Sequential scan baseline. Index scans and bitmap scans are disabled for "
     "this measurement, so PostgreSQL must read the table sequentially."

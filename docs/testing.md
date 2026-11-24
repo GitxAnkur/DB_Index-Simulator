@@ -2,16 +2,16 @@
 
 ## 1. Summary
 
-The project has **86 pytest tests**, all passing against the real local PostgreSQL
+The project has **98 pytest tests**, all passing against the real local PostgreSQL
 database and the real embedding model. There are no database mocks and no fabricated
 timings in the test path.
 
 ```text
-86 passed in 7.03s
+98 passed in 7.3s
 ```
 
 The suite is intentionally integration-heavy: it proves that the schema, dataset,
-indexes, parser, seven methods, cache, benchmark runner, CSV export, and API error
+indexes, parser, six methods, scope behaviour, cache, benchmark runner, CSV export, and API error
 handling work together.
 
 ## 2. Running the tests
@@ -54,10 +54,10 @@ mocks.
 | `tests/conftest.py` | — | Session app fixture, client fixture, cache reset, lexicon reset, model preload |
 | `tests/test_dataset.py` | 8 | Dataset size, IDs, category balance, nulls, ranges, embeddings, indexes, validation report |
 | `tests/test_parser.py` | 21 | 15 parametrised parser cases + normalisation, no-invention, noise/brand ambiguity, multi-word brands, ambiguous prices, invalid input |
-| `tests/test_search_methods.py` | 35 | All seven methods, limits, filters, plan evidence, hash/composite applicability, vector search, hybrid, fallback, cache, validation, SQL safety, product detail |
+| `tests/test_search_methods.py` | 47 | All six methods, limits, filters, plan evidence, hash/composite applicability, vector search, hybrid, scope gate, cache, validation, SQL safety, product detail |
 | `tests/test_benchmark.py` | 10 | Health, methods list, fixed suite, repetition statistics, cache conditions, validation, CSV export |
 | `tests/test_cache.py` | 7 | Hit/miss, clear, key composition, isolation, TTL expiry, LRU eviction, configuration |
-| `tests/test_api.py` | 5 | JSON 404/405, frontend HTML, database/extension, category distribution |
+| `tests/test_api.py` | 6 | JSON 404/405, search and analysis HTML, database/extension, category distribution |
 
 ## 4. What is asserted
 
@@ -86,35 +86,39 @@ mocks.
 
 ### Search methods (`test_search_methods.py`)
 
-- All seven methods return results for a common query.
+- All six methods return results for a common query.
 - `limit` is respected for 5 and 10.
 - Structured filters are actually applied to returned rows.
 - `full_scan` plan has no indexes and at least one Seq Scan.
-- `btree` plan uses a B-tree.
 - `hash` uses `idx_products_brand_hash` when a brand is present and reports
   non-applicability when it is not.
 - `composite_btree` uses the composite index when category is present and reports the
   leading-column rule when it is absent.
 - `hnsw` uses the HNSW index, reports cosine/384 dimensions, and returns similarities
-  in [0, 1].
-- `hybrid` applies structured filters and reports the filter count.
+  at or above the configured floor.
+- `hybrid` applies structured filters, reports the filter count, and returns filtered
+  rows.
 - Semantic search handles vocabulary absent from the dataset.
-- Keyword fallback is reported, not hidden.
+- Out-of-scope queries (`flying car`, `pet food`, `blue shirt`, `office desk`,
+  `running shoes`, `computer`) return zero results, no SQL, and zero DB time.
+- There is no keyword fallback; a keyword-only relational query executes one statement.
 - `use_case` is a soft ranking preference, not a hard filter.
 - Cache miss → hit transition, identical results, zero DB time on hit.
 - Limit is part of the cache key.
 - Unknown method, invalid limits, empty query, and non-JSON bodies return 400.
 - SQL injection payload does not drop the table and does not appear in SQL text;
   user values appear only in `params`.
+- Interactive search with `include_plan: false` reports DB time but no captured plan.
+- Repeated searches return identical rows.
 - Product detail returns 200/404 correctly.
 
 ### Benchmark (`test_benchmark.py`)
 
-- Health reports 100,000 products, 100,000 embeddings, pgvector 0.8.7, seven methods,
+- Health reports 100,000 products, 100,000 embeddings, pgvector 0.8.7, six methods,
   validation passed, and the HNSW index.
-- `/api/methods` lists exactly seven methods in the expected order.
+- `/api/methods` lists exactly six methods in the expected order.
 - Fixed suite contains seven queries and minimum 5 repetitions.
-- A 7-method, 5-repetition benchmark returns 5 samples per method.
+- A 6-method, 5-repetition benchmark returns 5 samples per method.
 - Statistics equal independently recomputed median/mean/min/max.
 - Every method has a representative plan.
 - Cached method reports 1 miss + 4 hits with ordered statuses.
@@ -140,16 +144,17 @@ mocks.
 
 - Unknown API endpoint returns JSON 404.
 - Wrong method returns JSON 405.
-- Root page serves the frontend with the expected title, benchmark section, and
-  locally vendored Chart.js.
+- Root page serves the simplified search page with the expected title, DB-time
+  section, and a link to `/analysis`.
+- Analysis page serves the dashboard with Chart.js and `analysis.js`.
 - PostgreSQL and pgvector are reachable.
 - Category distribution is 10 × 10,000.
 
 ## 5. Design notes
 
-- **Fixtures:** the app is created once per session; the model is loaded before the
-  app to avoid a race with the background warm-up thread. The cache and lexicon are
-  reset per test.
+- **Fixtures:** the app is created once per session with `TestConfig` (startup
+  warm-up disabled); the model is loaded before the app to avoid a race. The cache
+  and lexicon are reset per test.
 - **Real plans:** tests assert on plan content (`indexes_used`, `seq_scan_nodes`)
   where the plan is deterministic for the chosen query. The tests do not hardcode
   timings, because those vary by machine and load.

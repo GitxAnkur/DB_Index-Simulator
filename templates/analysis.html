@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Analysis · Indexed Product Search</title>
+  <meta name="description" content="Database execution time for each search method you have tested." />
+  <link rel="stylesheet" href="/static/css/style.css" />
+</head>
+<body>
+  <div class="topbar">
+    <div class="wrap topbar-inner">
+      <div class="brand">
+        <span class="brand-mark">DB</span>
+        <span class="brand-text">DBMS Index Lab</span>
+      </div>
+      <div class="topbar-right">
+        <nav class="topbar-nav" aria-label="Primary">
+          <a class="nav-link" href="/">Search</a>
+          <a class="nav-link active" href="/analysis">Analysis</a>
+        </nav>
+      </div>
+    </div>
+  </div>
+
+  <header class="hero hero-compact">
+    <div class="wrap">
+      <p class="eyebrow">Measured in this browser</p>
+      <h1>Analysis</h1>
+      <p class="subtitle">
+        Database execution time for every search method you have tested. Each bar is the most recent measurement for that method.
+      </p>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="panel" aria-labelledby="analysisTitle">
+      <div class="panel-heading">
+        <div>
+          <p class="section-kicker">Index comparison</p>
+          <h2 id="analysisTitle">Database execution time by method</h2>
+          <p class="muted">Run searches on the search page, then return here to compare the latest timings.</p>
+        </div>
+        <button id="clearHistoryBtn" class="btn btn-secondary btn-small" type="button">Clear history</button>
+      </div>
+
+      <div id="analysisEmpty" class="empty-state" hidden>
+        No searches recorded yet. Go to the <a href="/">search page</a>, choose a method, and run a query.
+      </div>
+
+      <div id="analysisContent" hidden>
+        <div class="metric-grid" id="analysisSummary"></div>
+
+        <div class="chart-card">
+          <div class="chart-head">
+            <div>
+              <h3>Latest database execution time</h3>
+              <p class="muted">Milliseconds spent inside PostgreSQL for the actual search query.</p>
+            </div>
+          </div>
+          <div class="chart-wrap"><canvas id="analysisChart"></canvas></div>
+        </div>
+
+        <div class="table-card">
+          <div class="chart-head">
+            <div>
+              <h3>Tested methods</h3>
+              <p class="muted">The most recent query and measurement for each method.</p>
+            </div>
+          </div>
+          <div class="table-scroll">
+            <table id="analysisTable">
+              <thead>
+                <tr>
+                  <th>Method</th>
+                  <th>Last query</th>
+                  <th class="num">DB time</th>
+                  <th class="num">Results</th>
+                  <th>Measured</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="wrap footer-inner">
+      <span>Indexed Product Search</span>
+      <span>History is stored only in this browser</span>
+    </div>
+  </footer>
+
+  <script src="/static/vendor/chart.umd.min.js"></script>
+  <script src="/static/js/analysis.js"></script>
+</body>
+</html>

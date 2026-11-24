@@ -11,7 +11,7 @@ from ..query_parser import ParsedQuery
 from .base import execute_relational
 
 METHOD = "hash"
-LABEL = "Hash Index Search"
+LABEL = "Hash Index"
 DESCRIPTION = (
     "A PostgreSQL hash index on brand accelerates equality lookups. Hash "
     "indexes do not support ranges or sorting; queries without a brand cannot "

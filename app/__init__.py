@@ -37,16 +37,35 @@ def create_app(config_object=Config) -> Flask:
     except Exception as exc:  # health endpoint reports the problem
         app.logger.error("Database pool initialisation failed: %s", exc)
 
-    # Load the embedding model in the background so the first semantic search
-    # does not pay the one-time model-loading cost.
-    def _warm_model():
+    # Warm the embedding model and the database at startup so the first
+    # interactive search does not pay a large one-off cold-start cost. Each
+    # index is touched once, then the application cache is cleared so the
+    # cached method still demonstrates a real miss on its first user run.
+    def _warm_search():
         try:
             get_model()
-            app.logger.info("Sentence Transformers model warmed up")
-        except Exception as exc:  # pragma: no cover - environment dependent
-            app.logger.error("Model warm-up failed: %s", exc)
+            from .cache import cache
+            from .search import METHOD_ORDER, run_search
 
-    threading.Thread(target=_warm_model, daemon=True).start()
+            for method in METHOD_ORDER:
+                if method == "cached":
+                    continue
+                try:
+                    run_search(
+                        "Black laptop under 80000",
+                        method,
+                        limit=5,
+                        include_plan=False,
+                    )
+                except Exception as exc:  # pragma: no cover - environment dependent
+                    app.logger.warning("Warm-up for %s failed: %s", method, exc)
+            cache.clear()
+            app.logger.info("Search model and database indexes warmed up")
+        except Exception as exc:  # pragma: no cover - environment dependent
+            app.logger.error("Search warm-up failed: %s", exc)
+
+    if app.config.get("WARM_UP_ON_START", True):
+        threading.Thread(target=_warm_search, daemon=True).start()
 
     from .routes import api, pages
 

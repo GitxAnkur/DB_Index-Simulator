@@ -1,4 +1,4 @@
-"""Method 6: hybrid B-tree / relational + HNSW vector search.
+"""Method 5: hybrid relational + HNSW vector search.
 
 Structured predicates (category, brand, colour, price, use case) are applied
 in SQL together with cosine-distance ordering. The actual plan determines
@@ -14,13 +14,13 @@ from ..query_parser import ParsedQuery
 from .base import (
     PRODUCT_COLUMNS,
     execute_sql,
+    filtered_vector_settings,
     similarity_expression,
     vector_info,
-    vector_settings,
 )
 
 METHOD = "hybrid"
-LABEL = "B+ Tree + HNSW Hybrid Search"
+LABEL = "Hybrid (Filters + Vector)"
 DESCRIPTION = (
     "Combines structured relational filters with semantic similarity. "
     "Structured predicates are evaluated by PostgreSQL while the embedding "
@@ -70,7 +70,7 @@ def search(
         "ORDER BY embedding <=> %s::vector LIMIT %s"
     )
     outcome = execute_sql(
-        sql, [vector, *params, vector, limit], vector_settings(), include_plan
+        sql, [vector, *params, vector, limit], filtered_vector_settings(), include_plan
     )
     outcome.update(
         {
@@ -81,7 +81,10 @@ def search(
                 f"<{len(query_embedding)}-dim query vector>",
                 limit,
             ],
-            "planner_settings": [f"hnsw.ef_search = {vector_info()['ef_search']}"],
+            "planner_settings": [
+                f"hnsw.ef_search = {vector_info()['ef_search']}",
+                "hnsw.iterative_scan = relaxed_order",
+            ],
             "method_details": {
                 "search_type": "structured filters + HNSW semantic ranking",
                 "structured_filters": filters,
@@ -90,9 +93,9 @@ def search(
                 "semantic_query": parsed.original_query,
                 "note": (
                     "PostgreSQL decides whether to use a relational index, the "
-                    "HNSW index, or both. A restrictive filter can cause the "
-                    "planner to choose a bitmap/sequential scan followed by a "
-                    "sort; the actual plan is reported below."
+                    "HNSW index, or both. Iterative HNSW scanning keeps going "
+                    "until enough filtered rows are found, so a selective "
+                    "predicate does not produce an empty result set."
                     if filters
                     else "No structured filters were parsed, so hybrid search "
                     "reduces to pure semantic search for this query."

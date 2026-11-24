@@ -57,7 +57,7 @@ def test_cache_key_includes_query_and_limit(client):
 def test_cache_is_not_used_by_other_methods(client):
     client.post("/api/cache/clear", json={})
     data = client.post(
-        "/api/search", json={"query": "Laptop under 80000", "method": "btree", "limit": 5}
+        "/api/search", json={"query": "Laptop under 80000", "method": "composite_btree", "limit": 5}
     ).get_json()
     assert data["cache"] is None
 

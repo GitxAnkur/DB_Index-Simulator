@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import numpy as np
 
+from ..config import Config
 from ..embeddings import to_pgvector
 from ..query_parser import ParsedQuery
 from .base import (
@@ -39,6 +40,19 @@ def search(
     outcome = execute_sql(
         sql, [vector, vector, limit], vector_settings(), include_plan
     )
+
+    # Second safety net: discard weak nearest neighbours. The scope gate has
+    # already rejected unrelated prompts, but a borderline query can still
+    # produce low-similarity rows. Keeping only genuine matches means an
+    # out-of-scope search can return zero products instead of noise.
+    threshold = Config.HNSW_MIN_SIMILARITY
+    scored_rows = outcome.get("rows", [])
+    kept_rows = [
+        row for row in scored_rows
+        if float(row.get("similarity") or 0.0) >= threshold
+    ]
+    outcome["rows"] = kept_rows
+
     outcome.update(
         {
             "sql": sql,
@@ -48,10 +62,14 @@ def search(
                 "search_type": "approximate nearest neighbour (HNSW)",
                 "structured_filters": False,
                 "semantic_query": parsed.original_query,
+                "min_similarity": threshold,
+                "rows_before_similarity_filter": len(scored_rows),
+                "rows_after_similarity_filter": len(kept_rows),
                 "note": (
                     "The query is embedded with the same Sentence Transformers "
                     "model used for product documents. Results are ordered by "
-                    "cosine distance. HNSW is approximate, so recall depends on "
+                    "cosine distance and rows below the minimum similarity are "
+                    "discarded. HNSW is approximate, so recall depends on "
                     "ef_search and index parameters."
                 ),
             },

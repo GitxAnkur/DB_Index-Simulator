@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Indexed Product Search &amp; Benchmarking System</title>
-  <meta name="description" content="Compare database indexing and retrieval techniques on 100,000 synthetic products." />
+  <title>Indexed Product Search</title>
+  <meta name="description" content="Compare database indexes and retrieval methods on 100,000 synthetic products." />
   <link rel="stylesheet" href="/static/css/style.css" />
 </head>
 <body>
@@ -12,15 +12,16 @@
     <div class="wrap topbar-inner">
       <div class="brand">
         <span class="brand-mark">DB</span>
-        <span class="brand-text">DBMS Benchmark Lab</span>
+        <span class="brand-text">DBMS Index Lab</span>
       </div>
       <div class="topbar-right">
+        <nav class="topbar-nav" aria-label="Primary">
+          <a class="nav-link active" href="/">Search</a>
+          <a class="nav-link" href="/analysis">Analysis</a>
+        </nav>
         <span id="dbStatus" class="status-pill status-loading">
           <span class="dot"></span> Connecting…
         </span>
-        <button id="clearCacheBtn" class="btn btn-ghost btn-small" type="button" title="Clear the application-level search cache">
-          Clear cache
-        </button>
       </div>
     </div>
   </div>
@@ -28,14 +29,14 @@
   <header class="hero">
     <div class="wrap">
       <p class="eyebrow">PostgreSQL · pgvector · Sentence Transformers</p>
-      <h1>Indexed Product Search <span>&amp;</span> Benchmarking System</h1>
+      <h1>Indexed Product Search</h1>
       <p class="subtitle">
-        Compare database indexing and retrieval techniques on 100,000 synthetic products.
+        Compare how different indexes and retrieval methods answer the same product query.
       </p>
       <div class="hero-stats" id="heroStats">
         <div class="hero-stat"><strong id="statProducts">100,000</strong><span>synthetic products</span></div>
         <div class="hero-stat"><strong>PostgreSQL + pgvector</strong><span>database technology</span></div>
-        <div class="hero-stat"><strong>7 methods</strong><span>DBMS academic project</span></div>
+        <div class="hero-stat"><strong>6 methods</strong><span>DBMS academic project</span></div>
         <div class="hero-stat"><strong id="statEmbedded">—</strong><span>product embeddings</span></div>
       </div>
     </div>
@@ -48,7 +49,7 @@
         <div>
           <p class="section-kicker">Product search</p>
           <h2 id="searchTitle">Ask in plain language</h2>
-          <p class="muted">Choose a retrieval method manually. The application never auto-selects the “fastest” method.</p>
+          <p class="muted">Choose an index or retrieval method. The application never auto-selects one.</p>
         </div>
         <span class="pill pill-soft">Top 5 or Top 10</span>
       </div>
@@ -100,13 +101,14 @@
     </section>
 
     <div id="searchError" class="alert alert-error" hidden role="alert"></div>
+    <div id="searchNotice" class="alert alert-info" hidden role="alert"></div>
 
     <!-- SEARCH PERFORMANCE -->
     <section id="performanceSection" class="panel" hidden aria-labelledby="perfTitle">
       <div class="panel-heading compact">
         <div>
           <p class="section-kicker">Actual measurement</p>
-          <h2 id="perfTitle">Search performance</h2>
+          <h2 id="perfTitle">Database execution time</h2>
         </div>
         <div id="cacheBadge" class="pill" hidden></div>
       </div>
@@ -127,142 +129,17 @@
       <div id="productGrid" class="product-grid"></div>
     </section>
 
-    <!-- TECHNICAL DETAILS -->
-    <section id="technicalSection" class="panel" hidden aria-labelledby="techTitle">
-      <details class="tech-details">
-        <summary>
-          <div>
-            <p class="section-kicker">Under the hood</p>
-            <h2 id="techTitle">Technical details: SQL, query plan, indexes, buffers</h2>
-          </div>
-          <span class="summary-chevron" aria-hidden="true">⌄</span>
-        </summary>
-        <div id="technicalBody" class="tech-body"></div>
-      </details>
-    </section>
-
-    <!-- BENCHMARK -->
-    <section id="benchmark" class="panel benchmark-panel" aria-labelledby="benchTitle">
-      <div class="panel-heading">
-        <div>
-          <p class="section-kicker">Repeated experiments</p>
-          <h2 id="benchTitle">Benchmark dashboard</h2>
-          <p class="muted">
-            Run the same query and limit across selected methods. Raw samples, medians,
-            means, minima, maxima and cache conditions are measured, never hardcoded.
-          </p>
-        </div>
-        <span class="pill pill-soft">≥ 5 repetitions</span>
-      </div>
-
-      <form id="benchmarkForm" class="benchmark-form">
-        <div class="benchmark-query-row">
-          <label class="field grow">
-            <span class="field-label">Benchmark query</span>
-            <input id="benchmarkQuery" type="text" maxlength="500" value="Black laptop under 80000" />
-          </label>
-          <label class="field">
-            <span class="field-label">Fixed suite</span>
-            <select id="suiteSelect">
-              <option value="">Choose a fixed query…</option>
-            </select>
-          </label>
-          <label class="field">
-            <span class="field-label">Repetitions</span>
-            <select id="repetitions">
-              <option value="5" selected>5</option>
-              <option value="10">10</option>
-              <option value="20">20</option>
-            </select>
-          </label>
-          <label class="field">
-            <span class="field-label">Limit</span>
-            <select id="benchmarkLimit">
-              <option value="5">Top 5</option>
-              <option value="10" selected>Top 10</option>
-            </select>
-          </label>
-        </div>
-
-        <div class="benchmark-methods">
-          <div class="methods-head">
-            <span class="field-label">Methods to compare</span>
-            <div class="methods-actions">
-              <button id="selectAllMethods" class="link-btn" type="button">Select all</button>
-              <button id="clearAllMethods" class="link-btn" type="button">Clear</button>
-            </div>
-          </div>
-          <div id="benchmarkMethodList" class="method-checkbox-grid"></div>
-        </div>
-
-        <div class="benchmark-actions">
-          <button id="runBenchmarkBtn" class="btn btn-primary" type="submit">
-            <span class="btn-label">Run benchmark</span>
-            <span class="spinner" hidden></span>
-          </button>
-          <button id="exportCsvBtn" class="btn btn-secondary" type="button">Export CSV</button>
-          <label class="check-inline"><input id="logScale" type="checkbox" /> Log scale chart</label>
-          <span id="benchmarkStatus" class="benchmark-status" aria-live="polite"></span>
-        </div>
-      </form>
-
-      <div id="benchmarkError" class="alert alert-error" hidden role="alert"></div>
-
-      <div id="benchmarkResults" hidden>
-        <div class="chart-card">
-          <div class="chart-head">
-            <div>
-              <h3>Execution time by method</h3>
-              <p id="chartCaption" class="muted"></p>
-            </div>
-            <div class="legend-note">Median is the primary comparison statistic</div>
-          </div>
-          <div class="chart-wrap"><canvas id="benchmarkChart"></canvas></div>
-        </div>
-
-        <div class="table-card">
-          <div class="chart-head">
-            <div>
-              <h3>Comparison table</h3>
-              <p class="muted">Database execution times in milliseconds. Cache state describes the cached method.</p>
-            </div>
-          </div>
-          <div class="table-scroll">
-            <table id="comparisonTable">
-              <thead>
-                <tr>
-                  <th>Method</th>
-                  <th class="num">Median</th>
-                  <th class="num">Mean</th>
-                  <th class="num">Min</th>
-                  <th class="num">Max</th>
-                  <th class="num">Successful</th>
-                  <th>Cache</th>
-                  <th>Comparable</th>
-                  <th class="num">Overlap</th>
-                </tr>
-              </thead>
-              <tbody></tbody>
-            </table>
-          </div>
-        </div>
-
-        <div id="benchmarkConditions" class="conditions"></div>
-        <div id="comparabilityNotes" class="comparability"></div>
-      </div>
-    </section>
-
     <section class="panel notes-panel">
       <div class="panel-heading compact">
         <div>
-          <p class="section-kicker">Academic notes</p>
-          <h2>How to read these measurements</h2>
+          <p class="section-kicker">How to read the result</p>
+          <h2>Real queries, real indexes</h2>
         </div>
       </div>
       <div class="notes-grid">
-        <div><h3>Real execution, not simulation</h3><p>Every timing comes from executing parameterised SQL against PostgreSQL. Query plans are captured with <code>EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON)</code>.</p></div>
-        <div><h3>Not every query is comparable</h3><p>Relational methods share filters and keyword predicates. HNSW and hybrid return semantic neighbours, while cached search changes state between runs.</p></div>
-        <div><h3>Indexes are not always used</h3><p>PostgreSQL may choose a sequential scan when a predicate is not selective. The plan is displayed exactly as executed.</p></div>
+        <div><h3>Database time only</h3><p>The reported number is the time PostgreSQL spent executing the actual search query. Embedding time is not included.</p></div>
+        <div><h3>Repeated searches are stable</h3><p>Each search runs one query. Plans are not captured during interactive searches, so a second hidden execution cannot distort the timing.</p></div>
+        <div><h3>Out-of-scope queries return nothing</h3><p>If a query does not match the product catalogue, the application returns zero products instead of unrelated neighbours.</p></div>
         <div><h3>Synthetic dataset</h3><p>The 100,000 products are synthetic demonstration data, not real retail inventory. Prices are in INR.</p></div>
       </div>
     </section>
@@ -270,14 +147,13 @@
 
   <footer class="footer">
     <div class="wrap footer-inner">
-      <span>Indexed Product Search &amp; Benchmarking System</span>
-      <span>PostgreSQL · pgvector · Flask · Sentence Transformers · Chart.js</span>
+      <span>Indexed Product Search</span>
+      <span>PostgreSQL · pgvector · Flask · Sentence Transformers</span>
     </div>
   </footer>
 
   <div id="toast" class="toast" hidden></div>
 
-  <script src="/static/vendor/chart.umd.min.js"></script>
   <script src="/static/js/app.js"></script>
 </body>
 </html>

@@ -1,4 +1,4 @@
-"""Method 7: application-level cached search.
+"""Method 6: application-level cached search.
 
 The cache is an in-memory TTL + LRU cache, not a database index. A cache miss
 runs the hybrid search (including query embedding and PostgreSQL execution); a

@@ -25,6 +25,13 @@ class Config:
     CACHE_TTL_SECONDS: int = int(os.getenv("CACHE_TTL_SECONDS", "300"))
     CACHE_MAX_ENTRIES: int = int(os.getenv("CACHE_MAX_ENTRIES", "512"))
     HNSW_EF_SEARCH: int = int(os.getenv("HNSW_EF_SEARCH", "100"))
+    # Minimum cosine similarity for an HNSW result to be shown. This is a
+    # second safety net against irrelevant nearest neighbours; in-scope
+    # catalogue queries score well above this value.
+    HNSW_MIN_SIMILARITY: float = float(os.getenv("HNSW_MIN_SIMILARITY", "0.30"))
+    # Warm the embedding model and the database caches at startup so the first
+    # interactive search does not pay a large one-off cold-start cost.
+    WARM_UP_ON_START: bool = os.getenv("WARM_UP_ON_START", "1") == "1"
     FLASK_HOST: str = os.getenv("FLASK_HOST", "127.0.0.1")
     FLASK_PORT: int = int(os.getenv("FLASK_PORT", "5001"))
     FLASK_DEBUG: bool = os.getenv("FLASK_DEBUG", "0") == "1"
@@ -40,3 +47,4 @@ class Config:
 class TestConfig(Config):
     TESTING = True
     CACHE_TTL_SECONDS = 60
+    WARM_UP_ON_START = False

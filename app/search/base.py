@@ -80,56 +80,15 @@ def execute_relational(
     include_plan: bool,
     settings: Sequence[str] = (),
 ) -> dict[str, Any]:
-    """Execute a relational query, relaxing keyword filters only if the exact
-    query returns no rows. The fallback is recorded in the response so the
-    benchmark never silently changes semantics.
+    """Execute exactly one relational query.
+
+    There is deliberately no keyword relaxation: one search executes one SQL
+    statement, so repeated searches with the same index are directly
+    comparable and the reported time is not inflated by a hidden retry.
     """
     sql, params = relational_sql(parsed, limit)
     outcome = execute_sql(sql, params, settings, include_plan)
-    outcome["sql"] = sql
-    outcome["params"] = params
-    outcome["fallback"] = None
-
-    if not outcome["rows"] and parsed.keywords:
-        relaxed = ParsedQuery(
-            original_query=parsed.original_query,
-            normalized_query=parsed.normalized_query,
-            category=parsed.category,
-            brand=parsed.brand,
-            color=parsed.color,
-            min_price=parsed.min_price,
-            max_price=parsed.max_price,
-            use_case=parsed.use_case,
-            keywords=[],
-            price_expression=parsed.price_expression,
-            matched_terms=parsed.matched_terms,
-        )
-        relaxed_sql, relaxed_params = relational_sql(relaxed, limit)
-        relaxed_outcome = execute_sql(
-            relaxed_sql, relaxed_params, settings, include_plan
-        )
-        if relaxed_outcome["rows"]:
-            relaxed_outcome["db_execution_ms"] = round(
-                outcome["db_execution_ms"]
-                + relaxed_outcome["db_execution_ms"],
-                3,
-            )
-            relaxed_outcome["sql"] = relaxed_sql
-            relaxed_outcome["params"] = relaxed_params
-            relaxed_outcome["fallback"] = {
-                "relaxed": "keywords",
-                "original_keywords": parsed.keywords,
-                "original_sql": sql,
-                "original_params": params,
-                "original_db_execution_ms": outcome["db_execution_ms"],
-                "note": (
-                    "The exact keyword filter returned zero rows, so the keyword "
-                    "predicate was relaxed and the category/price/brand/colour "
-                    "filters were retained. This fallback is included in the "
-                    "reported database time."
-                ),
-            }
-            return relaxed_outcome
+    outcome.update({"sql": sql, "params": params, "fallback": None})
     return outcome
 
 
@@ -206,6 +165,19 @@ def execute_sql(
 
 def vector_settings() -> list[str]:
     return [f"SET LOCAL hnsw.ef_search = {int(Config.HNSW_EF_SEARCH)}"]
+
+
+def filtered_vector_settings() -> list[str]:
+    """HNSW settings for queries with structured filters.
+
+    ``iterative_scan`` lets pgvector continue through the graph until enough
+    rows survive the filter, instead of returning an empty or short result set
+    when the nearest ef_search candidates do not match the predicate.
+    """
+    return [
+        f"SET LOCAL hnsw.ef_search = {int(Config.HNSW_EF_SEARCH)}",
+        "SET LOCAL hnsw.iterative_scan = relaxed_order",
+    ]
 
 
 def vector_info(embedding_dim: int = Config.EMBEDDING_DIM) -> dict[str, Any]:

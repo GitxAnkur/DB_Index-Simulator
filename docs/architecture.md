@@ -27,7 +27,7 @@ Flask app (run.py → app.create_app)
         │      │
         │      ├── query_parser.py ─ natural-language → ParsedQuery
         │      ├── embeddings.py ─── Sentence Transformers (384-d, CPU)
-        │      ├── search/ ───────── seven method modules + dispatcher
+        │      ├── search/ ───────── six method modules + dispatcher
         │      ├── benchmark.py ──── repetitions, statistics, CSV
         │      ├── cache.py ──────── TTL/LRU application cache
         │      └── plan.py ───────── EXPLAIN JSON normaliser
@@ -37,14 +37,14 @@ Flask app (run.py → app.create_app)
         ▼
 PostgreSQL 19 + pgvector 0.8.7
   products (100,000 rows, VECTOR(384))
-  B-tree, hash, composite B-tree, HNSW indexes
+  B-tree, hash, composite, HNSW indexes
 ```
 
 ## 3. Request flow — search
 
 `POST /api/search`:
 
-1. **Validate** the JSON body: `query` non-empty string, `method` one of seven,
+1. **Validate** the JSON body: `query` non-empty string, `method` one of six,
    `limit` in `(5, 10)`, `include_plan` boolean.
 2. **Parse** the query (`query_parser.parse_query`) into a `ParsedQuery`:
    category, brand, colour, min/max price, use case, keywords, original and
@@ -119,17 +119,20 @@ The benchmark deliberately does **not** hide failed runs: `successful_runs`,
 | `app/search/base.py` | Shared SQL fragments, parameterised execution, EXPLAIN capture |
 | `app/search/*.py` | One module per method |
 
-## 6. The seven methods
+## 6. The six methods
 
 | Method | SQL shape | Expected access path |
 |---|---|---|
 | `full_scan` | Structured `WHERE` + keyword `ILIKE`, index scans disabled | Seq Scan |
-| `btree` | Same `WHERE`, planner free to choose | B-tree on category/price/rating |
 | `hash` | Same `WHERE`, brand equality emphasized | Hash index on brand when present |
-| `composite_btree` | Same `WHERE` | `(category, price_inr, color)` B-tree |
+| `composite_btree` | Same `WHERE`, ordered by `price_inr, color` | `(category, price_inr, color)` B-tree |
 | `hnsw` | `ORDER BY embedding <=> %s::vector LIMIT %s` | HNSW index |
-| `hybrid` | Structured filters **and** vector `ORDER BY` | Relational index and/or HNSW, whatever the planner chooses |
+| `hybrid` | Structured filters **and** vector `ORDER BY`, iterative HNSW | Relational index and/or HNSW, whatever the planner chooses |
 | `cached` | TTL/LRU lookup around hybrid | No DB on a hit |
+
+The standalone single-column B-tree method was removed. The B-tree indexes on
+`price_inr`, `category`, and `rating` remain in the schema and are selected by the
+planner where useful, but only the composite index is an explicit relational method.
 
 The “expected” index is metadata, not a guarantee. The actual `EXPLAIN` output is
 always shown, and warnings are emitted when the expected access path is not used
@@ -166,24 +169,25 @@ of the outcome; a hit returns a deep copy with `db_execution_ms = 0` and
 `embedding_ms = 0`. TTL and LRU are enforced on every access. The cache is
 in-process, so it is not shared between worker processes (documented limitation).
 
-## 7. Keyword fallback
+## 7. Scope gate and single-query execution
 
-Relational methods first apply structured filters **and** keyword `ILIKE`
-predicates. If that exact query returns zero rows, the keyword predicate is relaxed
-while category/brand/colour/price remain, and the fallback is recorded:
+Before any method runs, the query is checked against the catalogue:
 
-```json
-{
-  "relaxed": "keywords",
-  "original_keywords": ["lightweight"],
-  "original_sql": "...",
-  "original_db_execution_ms": 21.3,
-  "note": "The exact keyword filter returned zero rows, ..."
-}
-```
+- it is in scope if it names a category or brand, or
+- every keyword has a word-boundary match in `name`, `description`, `tags`,
+  `specifications`, or `use_case` (practical synonyms allowed).
 
-The reported `db_execution_ms` includes both attempts, so the fallback is never
-hidden or made to look free. A warning is shown in the UI.
+Colour and price alone are refinements, not scope. An out-of-scope query returns
+`out_of_scope: true`, zero results, no SQL, and `db_execution_ms = 0`; the database
+is never queried for it.
+
+Relational methods apply structured filters **and** keyword `ILIKE` predicates in a
+single SQL statement. There is no keyword-relaxation fallback, so repeated searches
+are directly comparable and the reported time reflects exactly one execution.
+
+Interactive searches send `include_plan: false`, so plan capture (`EXPLAIN`) is not
+performed and cannot inflate the measured database time. The API and test suite can
+still request plans explicitly.
 
 ## 8. Concurrency and state
 
@@ -207,16 +211,17 @@ hidden or made to look free. A warning is shown in the UI.
 
 ## 10. Frontend
 
-A single page (`templates/index.html`) with three areas:
+Two pages:
 
-1. **Search** — query input, example chips, method selector, Top 5/10 radio buttons,
-   inline method hint.
-2. **Results and metrics** — metric cards (DB time, total, embedding, rows, indexes,
-   cache), parsed-filter chips, warnings, product cards, technical panel with SQL,
-   parameters, plan table, raw JSON, and method notes.
-3. **Benchmark dashboard** — fixed-suite selector, free-form query, method
-   checkboxes, repetitions, Chart.js bar chart (linear/log), comparison table, cache
-   and comparability notes, CSV export.
+1. **Search** (`templates/index.html`) — query input, example chips, method selector,
+   Top 5/10 radio buttons, inline method hint, metric cards (DB execution time,
+   result count, method, cache state), parsed-filter chips, warnings, and product
+   cards. Out-of-scope queries show a notice and zero products.
+2. **Analysis** (`templates/analysis.html`) — reads the latest measurement per method
+   from `localStorage` and renders a Chart.js bar graph plus a comparison table.
+
+The benchmark API remains available for academic measurement, but there is no
+benchmark dashboard in the UI and no “under the hood” SQL/plan panel.
 
 Chart.js is vendored at `static/vendor/chart.umd.min.js`, so the application works
 without a CDN or internet connection.

@@ -2,14 +2,13 @@
 
 **Product Search Engine: A Comparative Study of Database Indexing Techniques**
 
-A full-stack DBMS academic project that compares seven database search and retrieval
+A full-stack DBMS academic project that compares six database search and retrieval
 techniques on exactly **100,000 synthetic products** using **PostgreSQL**, **pgvector**,
 **Sentence Transformers**, **Flask**, and **Chart.js**.
 
-The application is both a working natural-language product-search interface and a
-measurement laboratory. Every timing shown in the UI comes from executing real
-parameterised SQL against PostgreSQL; query plans come from
-`EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON)`.
+The application is a working natural-language product-search interface with a simple
+analysis page. Every timing shown in the UI comes from executing real parameterised SQL
+against PostgreSQL; query plans come from `EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON)`.
 
 ![Landing page](docs/screenshots/01_landing.png)
 
@@ -21,35 +20,50 @@ parameterised SQL against PostgreSQL; query plans come from
 | PostgreSQL schema + constraints | Implemented |
 | pgvector + 384-dimensional embeddings | 100,000 real embeddings generated |
 | HNSW vector index | Built (`m=16`, `ef_construction=64`) |
-| Seven separately selectable methods | Implemented and tested |
+| Six separately selectable methods | Implemented and tested |
 | Natural-language parser | Categories, brands, colours, prices, use cases, keywords |
 | Flask API | Search, benchmark, health, cache, CSV export |
-| Frontend | Responsive search + benchmark dashboard with Chart.js |
-| Repeated benchmark experiments | ≥ 5 repetitions, raw samples, statistics |
-| EXPLAIN ANALYZE technical panel | SQL, plan tree, indexes, rows, buffers |
+| Frontend | Responsive search + simple analysis dashboard with Chart.js |
+| Repeated benchmark experiments | ≥ 5 repetitions, raw samples, statistics (API) |
+| Query-plan inspection | `EXPLAIN` available through the API and test suite |
 | CSV export | Per-run API export + fixed-suite CSV |
-| Pytest suite | 86 tests passing against the real database |
+| Pytest suite | 98 tests passing against the real database |
 | Documentation | README, setup, architecture, API, methods, methodology, report |
 
-## Seven search methods
+## Six search methods
 
-1. **Normal Search / Full Table Scan** — sequential-scan baseline with index and
-   bitmap scans deliberately disabled for the measurement.
-2. **B+ Tree Search** — PostgreSQL B-tree indexes on `price_inr`, `category`, and
-   `rating`; equality and range predicates.
-3. **Hash Index Search** — PostgreSQL hash index on `brand`; equality only. Queries
-   without a brand explicitly report that the hash index is not applicable.
-4. **Composite B+ Tree Search** — multicolumn B-tree on
-   `(category, price_inr, color)`; demonstrates the leading-column rule.
-5. **HNSW Vector Search** — cosine-distance approximate nearest-neighbour search
+1. **Full Table Scan** — sequential-scan baseline with index and bitmap scans
+   deliberately disabled for the measurement.
+2. **Hash Index** — PostgreSQL hash index on `brand`; equality only. Queries without
+   a brand explicitly report that the hash index is not applicable.
+3. **Composite Index** — multicolumn B-tree on `(category, price_inr, color)`;
+   demonstrates the leading-column rule and orders results along the index columns.
+4. **HNSW Vector Search** — cosine-distance approximate nearest-neighbour search
    over real Sentence Transformers embeddings.
-6. **B+ Tree + HNSW Hybrid Search** — structured SQL filters combined with semantic
-   ranking. The actual plan shows which indexes PostgreSQL used.
-7. **Cached Search** — application-level TTL/LRU cache in front of hybrid search;
+5. **Hybrid (Filters + Vector)** — structured SQL filters combined with semantic
+   ranking, using iterative HNSW scanning when filters are selective. The actual plan
+   shows which indexes PostgreSQL used.
+6. **Cached Search** — application-level TTL/LRU cache in front of hybrid search;
    demonstrates cache miss, hit, repeated queries, clearing, and separate hit timing.
 
 The user must manually select the search method. The application never auto-selects
 the “fastest” method.
+
+The single-column B-tree indexes on `price_inr`, `category`, and `rating` remain part
+of the schema and are used by the planner, but they are no longer exposed as a separate
+selectable method. The composite method is the only explicitly indexed relational
+method.
+
+### Scope behaviour
+
+A query is answered only when it is in scope for the catalogue: it names a category or
+brand, or every keyword has a word-boundary match in the product text (synonyms are
+allowed). Colour and price on their own are refinements, not scope. Out-of-scope
+queries return **zero products** without a database search, so unrelated prompts never
+receive arbitrary nearest neighbours.
+
+Interactive searches also run a single SQL statement (`include_plan: false`), so a
+second hidden `EXPLAIN` execution cannot distort repeated timings.
 
 ## Technology stack
 
@@ -80,16 +94,18 @@ dbms_2/
 │       ├── __init__.py          # Dispatcher and response assembly
 │       ├── base.py              # Shared SQL/execution helpers
 │       ├── full_scan.py         # Method 1
-│       ├── btree.py             # Method 2
-│       ├── hash_index.py        # Method 3
-│       ├── composite_btree.py   # Method 4
-│       ├── hnsw.py              # Method 5
-│       ├── hybrid.py            # Method 6
-│       └── cached.py            # Method 7
-├── templates/index.html
+│       ├── hash_index.py        # Method 2
+│       ├── composite_btree.py   # Method 3
+│       ├── hnsw.py              # Method 4
+│       ├── hybrid.py            # Method 5
+│       └── cached.py            # Method 6
+├── templates/
+│   ├── index.html               # Search page
+│   └── analysis.html            # Analysis dashboard
 ├── static/
 │   ├── css/style.css
 │   ├── js/app.js
+│   ├── js/analysis.js
 │   └── vendor/chart.umd.min.js
 ├── scripts/
 │   ├── schema.sql
@@ -100,7 +116,7 @@ dbms_2/
 │   ├── run_benchmarks.py
 │   ├── start_postgres.sh
 │   └── stop_postgres.sh
-├── tests/                       # 86 pytest tests
+├── tests/                       # 98 pytest tests
 ├── data/                        # Validation and benchmark JSON
 ├── docs/                        # Reports, guides, CSV, screenshots
 ├── synthetic_products_100000.csv
@@ -185,7 +201,7 @@ python scripts/run_benchmarks.py
 
 | Endpoint | Purpose |
 |---|---|
-| `POST /api/search` | Run one of the seven methods |
+| `POST /api/search` | Run one of the six methods |
 | `POST /api/benchmark` | Repeated measurements + statistics |
 | `POST /api/benchmark/export` | Run a benchmark and download CSV |
 | `GET /api/benchmark/suite` | Fixed seven-query suite |
@@ -208,23 +224,32 @@ Full request/response documentation: `docs/api.md`.
 
 ## Benchmarks
 
-Fixed suite (5 repetitions, Top 10, median database execution time in ms):
+The benchmark API is retained for academic measurement. Fixed-suite results are
+stored in `docs/benchmark_results.csv` and summarised in
+`docs/benchmark_summary.md`; methodology is in `docs/benchmark_methodology.md`.
+The interactive UI focuses on the latest real database time per method on the
+**Analysis** page rather than a full benchmark dashboard.
 
-| Query | Full scan | B-tree | Hash | Composite | HNSW | Hybrid | Cached |
-|---|---:|---:|---:|---:|---:|---:|---:|
-| Samsung smartphone | 10.378 | 0.886 | 0.763 | 0.747 | 0.558 | 3.453 | 0.000 |
-| Laptops | 11.504 | 2.641 | 2.489 | 2.689 | 0.547 | 0.514 | 0.000 |
-| Laptop under 80000 | 9.839 | 1.711 | 1.599 | 1.609 | 0.700 | 0.658 | 0.000 |
-| Black laptop under 80000 | 9.333 | 0.728 | 0.608 | 0.576 | 1.088 | 1.644 | 0.000 |
-| Lightweight laptop for programming | 23.813 | 17.054 | 16.706 | 19.946 | 0.593 | 0.606 | 0.000 |
-| Wireless headphones for travel | 15.783 | 20.600 | 20.666 | 22.073 | 0.597 | 0.577 | 0.000 |
-| Gaming monitor under 30000 | 10.129 | 1.670 | 1.501 | 1.490 | 0.863 | 0.937 | 0.000 |
+Representative warm timings on this machine (Top 5, `include_plan: false`):
 
-These are actual measurements from this machine, not hardcoded values. Full raw
-samples are in `docs/benchmark_results.csv`; methodology is in
-`docs/benchmark_methodology.md`. HNSW/hybrid database times exclude query-embedding
-time (reported separately). Cached medians are zero because four of five runs are
-cache hits; the first run is a real miss.
+| Method | Typical DB execution time |
+|---|---:|
+| Full Table Scan | ~9.4–9.9 ms |
+| Hash Index (brand present) | ~0.6–0.7 ms |
+| Composite Index | ~0.57 ms |
+| HNSW Vector Search | ~1.4–1.8 ms |
+| Hybrid (Filters + Vector) | ~1.4–1.6 ms |
+| Cached Search | 0 ms on a hit |
+
+These are actual measurements, not hardcoded values. HNSW/hybrid database times
+exclude query-embedding time. Repeated identical searches are stable because the
+interactive path runs one query and performs no plan capture.
+
+## Analysis page
+
+The `/analysis` page reads the most recent measurement for each method from the
+browser's `localStorage` and renders a Chart.js bar graph plus a table. Nothing is
+sent to a server; clearing browser storage clears the history.
 
 ## Testing
 
@@ -233,8 +258,8 @@ source .venv/bin/activate
 pytest -q
 ```
 
-Result on this machine: **86 passed**. The suite exercises the real database:
-dataset integrity, all seven methods, parser behaviour, result limits, invalid
+Result on this machine: **98 passed**. The suite exercises the real database:
+dataset integrity, all six methods, parser and scope behaviour, result limits, invalid
 requests, SQL parameterisation/injection safety, cache hit/miss/clear/TTL/LRU,
 vector and hybrid search, benchmark statistics, CSV export, and API errors.
 
@@ -246,7 +271,7 @@ See `docs/testing.md`.
 - `docs/database_setup.md` — schema, import, indexes, verification
 - `docs/architecture.md` — system architecture and request flow
 - `docs/api.md` — API reference
-- `docs/search_methods.md` — seven methods and observed plans
+- `docs/search_methods.md` — six methods and observed plans
 - `docs/benchmark_methodology.md` — measurement methodology and validity
 - `docs/testing.md` — test plan and results
 - `docs/validation_report.md` — dataset validation
@@ -270,12 +295,15 @@ This is synthetic demonstration data, **not real retail inventory**.
 - The embedding model runs on CPU; the first semantic request in a fresh process
   may pay a one-time model-loading cost (the app warms the model in the background).
 - HNSW is approximate; recall depends on `ef_search` and index parameters.
-- Relational keyword search uses `ILIKE` and practical synonym expansion. When an
-  exact keyword returns zero rows, the query is relaxed and the fallback is reported
-  in the UI/API; semantic methods handle unseen vocabulary better.
+- Relational keyword search uses `ILIKE` and practical synonym expansion, but there
+  is no keyword relaxation: one search executes one query. Semantic methods handle
+  unseen vocabulary better.
 - PostgreSQL’s planner may choose a different index than the method’s “expected”
-  index. The actual plan is always displayed; no index usage is claimed without
-  evidence.
+  index. The actual plan is available through the API and test suite; no index usage
+  is claimed without evidence.
+- Out-of-scope queries are rejected before the database query so unrelated prompts
+  return nothing. The scope check itself scans the product text and is cached briefly
+  in-process.
 - Cold-start measurements are not forced by restarting PostgreSQL; the benchmark
   uses one unmeasured warm-up run and reports cache conditions.
 - Product images are intentionally postponed; `image_key` and `image_prompt` are

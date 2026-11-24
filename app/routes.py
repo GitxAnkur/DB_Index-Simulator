@@ -31,6 +31,11 @@ def index():
     return render_template("index.html")
 
 
+@pages.get("/analysis")
+def analysis():
+    return render_template("analysis.html")
+
+
 @api.get("/health")
 def health():
     started = time.perf_counter()
@@ -84,7 +89,7 @@ def health():
             "healthy": True,
             "app_version": "1.0.0",
             "project": {
-                "title": "Indexed Product Search & Benchmarking System",
+                "title": "Indexed Product Search",
                 "subtitle": (
                     "Compare database indexing and retrieval techniques on "
                     "100,000 synthetic products."
@@ -134,7 +139,7 @@ def search():
     if not isinstance(query, str) or not query.strip():
         return error("'query' must be a non-empty string")
     if not isinstance(method, str) or not method:
-        return error("'method' must be one of the seven supported method identifiers")
+        return error("'method' must be one of the six supported method identifiers")
     if not isinstance(limit, int) or isinstance(limit, bool):
         return error("'limit' must be an integer (5 or 10)")
     if not isinstance(include_plan, bool):

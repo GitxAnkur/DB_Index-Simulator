@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import re
 import threading
+import time
 from dataclasses import dataclass, field, asdict
 from typing import Iterable
 
@@ -135,6 +136,24 @@ class ParsedQuery:
                 self.min_price,
                 self.max_price,
                 self.use_case,
+            )
+        )
+
+    @property
+    def has_hard_filters(self) -> bool:
+        """True when the query constrains a catalogue column directly.
+
+        ``use_case`` is deliberately excluded: it is a soft ranking hint, so on
+        its own it must not make an unrelated query count as in scope.
+        """
+        return any(
+            value is not None
+            for value in (
+                self.category,
+                self.brand,
+                self.color,
+                self.min_price,
+                self.max_price,
             )
         )
 
@@ -385,6 +404,21 @@ KEYWORD_SYNONYMS = {
 }
 
 
+def _keyword_variant_condition(keyword: str) -> tuple[str, list[str]]:
+    """One keyword plus its practical synonyms, OR-ed across text columns."""
+    variants = [keyword, *KEYWORD_SYNONYMS.get(keyword.lower(), [])]
+    clauses = []
+    params: list[str] = []
+    for variant in variants:
+        like = f"%{variant}%"
+        clauses.append(
+            "(name ILIKE %s OR description ILIKE %s OR tags ILIKE %s "
+            "OR specifications ILIKE %s OR use_case ILIKE %s)"
+        )
+        params.extend([like] * 5)
+    return "(" + " OR ".join(clauses) + ")", params
+
+
 def keyword_condition(keywords: list[str]) -> tuple[str, list[str]]:
     """Build a parameterised AND-of-OR keyword predicate.
 
@@ -397,14 +431,93 @@ def keyword_condition(keywords: list[str]) -> tuple[str, list[str]]:
     clauses = []
     params: list[str] = []
     for keyword in keywords:
-        variants = [keyword, *KEYWORD_SYNONYMS.get(keyword.lower(), [])]
-        variant_clauses = []
-        for variant in variants:
-            like = f"%{variant}%"
-            variant_clauses.append(
-                "(name ILIKE %s OR description ILIKE %s OR tags ILIKE %s "
-                "OR specifications ILIKE %s OR use_case ILIKE %s)"
-            )
-            params.extend([like] * 5)
-        clauses.append("(" + " OR ".join(variant_clauses) + ")")
+        clause, clause_params = _keyword_variant_condition(keyword)
+        clauses.append(clause)
+        params.extend(clause_params)
     return "(" + " AND ".join(clauses) + ")", params
+
+
+def _keyword_boundary_condition(keyword: str) -> tuple[str, list[str]]:
+    """Word-boundary variant of a keyword predicate for scope checks.
+
+    A substring test is used as a cheap prefilter, then a word-boundary regex
+    confirms the match. This avoids the false positive where ``pet`` matches
+    ``competitive`` without paying the full regex cost on every row.
+    Synonyms are still accepted.
+    """
+    variants = [keyword, *KEYWORD_SYNONYMS.get(keyword.lower(), [])]
+    clauses = []
+    params: list[str] = []
+    for variant in variants:
+        like = f"%{variant}%"
+        pattern = r"\m" + re.escape(variant) + r"\M"
+        clauses.append(
+            "((name ILIKE %s OR description ILIKE %s OR tags ILIKE %s "
+            "OR specifications ILIKE %s OR use_case ILIKE %s) AND "
+            "(name ~* %s OR description ~* %s OR tags ~* %s "
+            "OR specifications ~* %s OR use_case ~* %s))"
+        )
+        params.extend([like] * 5 + [pattern] * 5)
+    return "(" + " OR ".join(clauses) + ")", params
+
+
+_scope_cache: dict[tuple[str, ...], tuple[float, bool]] = {}
+_scope_cache_lock = threading.Lock()
+_SCOPE_CACHE_TTL_SECONDS = 300
+_SCOPE_CACHE_MAX_ENTRIES = 512
+
+
+def _scope_cache_get(key: tuple[str, ...]) -> bool | None:
+    now = time.monotonic()
+    with _scope_cache_lock:
+        entry = _scope_cache.get(key)
+        if entry is None:
+            return None
+        if now - entry[0] >= _SCOPE_CACHE_TTL_SECONDS:
+            _scope_cache.pop(key, None)
+            return None
+        return entry[1]
+
+
+def _scope_cache_set(key: tuple[str, ...], value: bool) -> None:
+    with _scope_cache_lock:
+        if len(_scope_cache) >= _SCOPE_CACHE_MAX_ENTRIES:
+            _scope_cache.clear()
+        _scope_cache[key] = (time.monotonic(), value)
+
+
+def reset_scope_cache() -> None:
+    with _scope_cache_lock:
+        _scope_cache.clear()
+
+
+def keywords_match_exists(keywords: list[str]) -> bool:
+    """Return True when every keyword has a lexical catalogue match.
+
+    This is the scope gate for queries that contain no category or brand.
+    Matching is word-boundary based, so ``pet`` does not match ``competitive``.
+    Requiring every keyword keeps vague or unrelated phrases out of the result
+    set while still allowing practical synonyms such as lightweight/portable.
+    Results are cached briefly because an out-of-scope check scans the table.
+    """
+    if not keywords:
+        return False
+    key = tuple(keyword.lower() for keyword in keywords)
+    cached = _scope_cache_get(key)
+    if cached is not None:
+        return cached
+
+    clauses = []
+    params: list[str] = []
+    for keyword in keywords:
+        clause, clause_params = _keyword_boundary_condition(keyword)
+        clauses.append(clause)
+        params.extend(clause_params)
+    where = "(" + " AND ".join(clauses) + ")"
+    row = db.fetch_one(
+        f"SELECT EXISTS (SELECT 1 FROM products WHERE {where}) AS found",
+        params,
+    )
+    found = bool(row and row["found"])
+    _scope_cache_set(key, found)
+    return found
