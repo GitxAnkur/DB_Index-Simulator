@@ -279,6 +279,8 @@ See `docs/testing.md`.
 - `docs/benchmark_summary.md` — fixed-suite summary
 - `docs/benchmark_results.csv` — raw fixed-suite samples
 - `docs/report.md` — full academic report with actual results
+- `docs/presentation_guide.md` — idea-to-final presentation guide, demo script,
+  three-person work division, viva Q&A, setup, and glossary
 - `docs/screenshots/` — application screenshots
 
 ## Dataset
