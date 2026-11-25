@@ -281,6 +281,12 @@ See `docs/testing.md`.
 - `docs/report.md` — full academic report with actual results
 - `docs/presentation_guide.md` — idea-to-final presentation guide, demo script,
   three-person work division, viva Q&A, setup, and glossary
+- `docs/20_minute_presentation_script.md` — timed 20-minute, three-member speaking
+  script with demo cues, viva answers, and failure recovery
+- `docs/curated_demo_queries.md` — one demo query per index with the actual plan,
+  measured median, verdict, and the sentence to say
+- `docs/demo_query_results.json` — raw measured evidence behind every demo claim
+- `docs/DBMS_Index_Project_Presentation.pptx` — 18-slide deck with speaker notes
 - `docs/screenshots/` — application screenshots
 
 ## Dataset

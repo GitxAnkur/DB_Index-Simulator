@@ -1,0 +1,1701 @@
+{
+  "limit": 5,
+  "repetitions": 10,
+  "note": "Warm medians measured on this machine (Nov 2026). Times vary by ~0.1-1 ms; compare medians, not single runs.",
+  "cases": {
+    "wireless": {
+      "query": "wireless",
+      "parsed": {
+        "category": null,
+        "brand": null,
+        "color": null,
+        "max_price": null,
+        "use_case": null,
+        "keywords": [
+          "wireless"
+        ]
+      },
+      "methods": {
+        "full_scan": {
+          "median_ms": 88.911,
+          "min_ms": 88.012,
+          "max_ms": 90.993,
+          "p95_ms": 90.993,
+          "samples": [
+            90.921,
+            90.993,
+            89.394,
+            88.567,
+            88.171,
+            89.235,
+            88.746,
+            89.076,
+            88.012,
+            88.162
+          ],
+          "result_count": 5,
+          "indexes_used": [],
+          "top_node": "Limit",
+          "seq_scan_nodes": 1,
+          "index_scan_nodes": 0,
+          "nodes": [
+            {
+              "depth": 0,
+              "type": "Limit",
+              "relation": null,
+              "index": null,
+              "index_condition": null,
+              "filter": null
+            },
+            {
+              "depth": 1,
+              "type": "Gather Merge",
+              "relation": null,
+              "index": null,
+              "index_condition": null,
+              "filter": null
+            },
+            {
+              "depth": 2,
+              "type": "Sort",
+              "relation": null,
+              "index": null,
+              "index_condition": null,
+              "filter": null
+            },
+            {
+              "depth": 3,
+              "type": "Seq Scan",
+              "relation": "products",
+              "index": null,
+              "index_condition": null,
+              "filter": "((products.name ~~* '%wireless%'::text) OR (products.description ~~* '%wireless%'::text) OR (products.tags ~~* '%wireless%'::text) OR (products.specifications ~~* '%wireless%'::text) OR (products.use_case ~~* '%wireless%'::text) OR (products.name ~~* '%bluetooth%'::text) OR (products.description ~~* '%bluetooth%'::text) OR (products.tags ~~* '%bluetooth%'::text) OR (products.specifications ~~* '%bluetooth%'::text) OR (products.use_case ~~* '%bluetooth%'::text) OR (products.name ~~* '%wi-fi%'::text) OR (products.description ~~* '%wi-fi%'::text) OR (products.tags ~~* '%wi-fi%'::text) OR (products.specifications ~~* '%wi-fi%'::text) OR (products.use_case ~~* '%wi-fi%'::text) OR (products.name ~~* '%wifi%'::text) OR (products.description ~~* '%wifi%'::text) OR (products.tags ~~* '%wifi%'::text) OR (products.specifications ~~* '%wifi%'::text) OR (products.use_case ~~* '%wifi%'::text))"
+            }
+          ],
+          "warnings": []
+        },
+        "btree": {
+          "median_ms": 88.364,
+          "min_ms": 87.267,
+          "max_ms": 101.545,
+          "p95_ms": 101.545,
+          "samples": [
+            88.438,
+            88.29,
+            87.541,
+            88.467,
+            88.908,
+            101.545,
+            89.231,
+            87.96,
+            87.673,
+            87.267
+          ],
+          "result_count": 5,
+          "indexes_used": [],
+          "top_node": "Limit",
+          "seq_scan_nodes": 1,
+          "index_scan_nodes": 0,
+          "nodes": [
+            {
+              "depth": 0,
+              "type": "Limit",
+              "relation": null,
+              "index": null,
+              "index_condition": null,
+              "filter": null
+            },
+            {
+              "depth": 1,
+              "type": "Gather Merge",
+              "relation": null,
+              "index": null,
+              "index_condition": null,
+              "filter": null
+            },
+            {
+              "depth": 2,
+              "type": "Sort",
+              "relation": null,
+              "index": null,
+              "index_condition": null,
+              "filter": null
+            },
+            {
+              "depth": 3,
+              "type": "Seq Scan",
+              "relation": "products",
+              "index": null,
+              "index_condition": null,
+              "filter": "((products.name ~~* '%wireless%'::text) OR (products.description ~~* '%wireless%'::text) OR (products.tags ~~* '%wireless%'::text) OR (products.specifications ~~* '%wireless%'::text) OR (products.use_case ~~* '%wireless%'::text) OR (products.name ~~* '%bluetooth%'::text) OR (products.description ~~* '%bluetooth%'::text) OR (products.tags ~~* '%bluetooth%'::text) OR (products.specifications ~~* '%bluetooth%'::text) OR (products.use_case ~~* '%bluetooth%'::text) OR (products.name ~~* '%wi-fi%'::text) OR (products.description ~~* '%wi-fi%'::text) OR (products.tags ~~* '%wi-fi%'::text) OR (products.specifications ~~* '%wi-fi%'::text) OR (products.use_case ~~* '%wi-fi%'::text) OR (products.name ~~* '%wifi%'::text) OR (products.description ~~* '%wifi%'::text) OR (products.tags ~~* '%wifi%'::text) OR (products.specifications ~~* '%wifi%'::text) OR (products.use_case ~~* '%wifi%'::text))"
+            }
+          ],
+          "warnings": [
+            "The planner chose no index for this query; see the EXPLAIN plan. This can happen when the filter is not selective enough."
+          ]
+        },
+        "hash": {
+          "median_ms": 86.758,
+          "min_ms": 86.296,
+          "max_ms": 88.211,
+          "p95_ms": 88.211,
+          "samples": [
+            88.211,
+            86.914,
+            86.397,
+            86.864,
+            86.85,
+            86.296,
+            86.413,
+            86.457,
+            86.725,
+            86.791
+          ],
+          "result_count": 5,
+          "indexes_used": [],
+          "top_node": "Limit",
+          "seq_scan_nodes": 1,
+          "index_scan_nodes": 0,
+          "nodes": [
+            {
+              "depth": 0,
+              "type": "Limit",
+              "relation": null,
+              "index": null,
+              "index_condition": null,
+              "filter": null
+            },
+            {
+              "depth": 1,
+              "type": "Gather Merge",
+              "relation": null,
+              "index": null,
+              "index_condition": null,
+              "filter": null
+            },
+            {
+              "depth": 2,
+              "type": "Sort",
+              "relation": null,
+              "index": null,
+              "index_condition": null,
+              "filter": null
+            },
+            {
+              "depth": 3,
+              "type": "Seq Scan",
+              "relation": "products",
+              "index": null,
+              "index_condition": null,
+              "filter": "((products.name ~~* '%wireless%'::text) OR (products.description ~~* '%wireless%'::text) OR (products.tags ~~* '%wireless%'::text) OR (products.specifications ~~* '%wireless%'::text) OR (products.use_case ~~* '%wireless%'::text) OR (products.name ~~* '%bluetooth%'::text) OR (products.description ~~* '%bluetooth%'::text) OR (products.tags ~~* '%bluetooth%'::text) OR (products.specifications ~~* '%bluetooth%'::text) OR (products.use_case ~~* '%bluetooth%'::text) OR (products.name ~~* '%wi-fi%'::text) OR (products.description ~~* '%wi-fi%'::text) OR (products.tags ~~* '%wi-fi%'::text) OR (products.specifications ~~* '%wi-fi%'::text) OR (products.use_case ~~* '%wi-fi%'::text) OR (products.name ~~* '%wifi%'::text) OR (products.description ~~* '%wifi%'::text) OR (products.tags ~~* '%wifi%'::text) OR (products.specifications ~~* '%wifi%'::text) OR (products.use_case ~~* '%wifi%'::text))"
+            }
+          ],
+          "warnings": [
+            "No brand was parsed, so the brand hash index is not applicable. The plan may show a sequential scan."
+          ]
+        }
+      }
+    },
+    "laptop": {
+      "query": "laptop",
+      "parsed": {
+        "category": "Laptop",
+        "brand": null,
+        "color": null,
+        "max_price": null,
+        "use_case": null,
+        "keywords": []
+      },
+      "methods": {
+        "full_scan": {
+          "median_ms": 10.5065,
+          "min_ms": 10.091,
+          "max_ms": 11.075,
+          "p95_ms": 11.075,
+          "samples": [
+            10.646,
+            10.125,
+            10.629,
+            10.384,
+            10.642,
+            10.75,
+            10.091,
+            10.276,
+            10.352,
+            11.075
+          ],
+          "result_count": 5,
+          "indexes_used": [],
+          "top_node": "Limit",
+          "seq_scan_nodes": 1,
+          "index_scan_nodes": 0,
+          "nodes": [
+            {
+              "depth": 0,
+              "type": "Limit",
+              "relation": null,
+              "index": null,
+              "index_condition": null,
+              "filter": null
+            },
+            {
+              "depth": 1,
+              "type": "Sort",
+              "relation": null,
+              "index": null,
+              "index_condition": null,
+              "filter": null
+            },
+            {
+              "depth": 2,
+              "type": "Seq Scan",
+              "relation": "products",
+              "index": null,
+              "index_condition": null,
+              "filter": "(products.category = 'Laptop'::text)"
+            }
+          ],
+          "warnings": []
+        },
+        "btree": {
+          "median_ms": 2.842,
+          "min_ms": 2.559,
+          "max_ms": 3.259,
+          "p95_ms": 3.259,
+          "samples": [
+            3.259,
+            2.945,
+            3.08,
+            2.892,
+            2.614,
+            2.744,
+            2.559,
+            2.792,
+            2.976,
+            2.635
+          ],
+          "result_count": 5,
+          "indexes_used": [
+            "idx_products_category_btree"
+          ],
+          "top_node": "Limit",
+          "seq_scan_nodes": 0,
+          "index_scan_nodes": 1,
+          "nodes": [
+            {
+              "depth": 0,
+              "type": "Limit",
+              "relation": null,
+              "index": null,
+              "index_condition": null,
+              "filter": null
+            },
+            {
+              "depth": 1,
+              "type": "Sort",
+              "relation": null,
+              "index": null,
+              "index_condition": null,
+              "filter": null
+            },
+            {
+              "depth": 2,
+              "type": "Bitmap Heap Scan",
+              "relation": "products",
+              "index": null,
+              "index_condition": null,
+              "filter": null
+            },
+            {
+              "depth": 3,
+              "type": "Bitmap Index Scan",
+              "relation": null,
+              "index": "idx_products_category_btree",
+              "index_condition": "(products.category = 'Laptop'::text)",
+              "filter": null
+            }
+          ],
+          "warnings": []
+        }
+      }
+    },
+    "Motorola": {
+      "query": "Motorola",
+      "parsed": {
+        "category": null,
+        "brand": "Motorola",
+        "color": null,
+        "max_price": null,
+        "use_case": null,
+        "keywords": []
+      },
+      "methods": {
+        "full_scan": {
+          "median_ms": 9.1385,
+          "min_ms": 8.793,
+          "max_ms": 9.216,
+          "p95_ms": 9.216,
+          "samples": [
+            9.196,
+            9.127,
+            9.215,
+            9.15,
+            8.908,
+            9.216,
+            9.175,
+            8.875,
+            8.978,
+            8.793
+          ],
+          "result_count": 5,
+          "indexes_used": [],
+          "top_node": "Limit",
+          "seq_scan_nodes": 1,
+          "index_scan_nodes": 0,
+          "nodes": [
+            {
+              "depth": 0,
+              "type": "Limit",
+              "relation": null,
+              "index": null,
+              "index_condition": null,
+              "filter": null
+            },
+            {
+              "depth": 1,
+              "type": "Sort",
+              "relation": null,
+              "index": null,
+              "index_condition": null,
+              "filter": null
+            },
+            {
+              "depth": 2,
+              "type": "Seq Scan",
+              "relation": "products",
+              "index": null,
+              "index_condition": null,
+              "filter": "(products.brand = 'Motorola'::text)"
+            }
+          ],
+          "warnings": []
+        },
+        "hash": {
+          "median_ms": 0.5385,
+          "min_ms": 0.474,
+          "max_ms": 0.859,
+          "p95_ms": 0.859,
+          "samples": [
+            0.859,
+            0.613,
+            0.509,
+            0.649,
+            0.568,
+            0.579,
+            0.474,
+            0.506,
+            0.474,
+            0.479
+          ],
+          "result_count": 5,
+          "indexes_used": [
+            "idx_products_brand_hash"
+          ],
+          "top_node": "Limit",
+          "seq_scan_nodes": 0,
+          "index_scan_nodes": 1,
+          "nodes": [
+            {
+              "depth": 0,
+              "type": "Limit",
+              "relation": null,
+              "index": null,
+              "index_condition": null,
+              "filter": null
+            },
+            {
+              "depth": 1,
+              "type": "Sort",
+              "relation": null,
+              "index": null,
+              "index_condition": null,
+              "filter": null
+            },
+            {
+              "depth": 2,
+              "type": "Bitmap Heap Scan",
+              "relation": "products",
+              "index": null,
+              "index_condition": null,
+              "filter": null
+            },
+            {
+              "depth": 3,
+              "type": "Bitmap Index Scan",
+              "relation": null,
+              "index": "idx_products_brand_hash",
+              "index_condition": "(products.brand = 'Motorola'::text)",
+              "filter": null
+            }
+          ],
+          "warnings": []
+        },
+        "composite_btree": {
+          "median_ms": 1.0925,
+          "min_ms": 1.001,
+          "max_ms": 2.362,
+          "p95_ms": 2.362,
+          "samples": [
+            2.362,
+            1.096,
+            1.218,
+            1.082,
+            1.031,
+            1.05,
+            1.001,
+            1.214,
+            1.46,
+            1.089
+          ],
+          "result_count": 5,
+          "indexes_used": [
+            "idx_products_price_btree"
+          ],
+          "top_node": "Limit",
+          "seq_scan_nodes": 0,
+          "index_scan_nodes": 1,
+          "nodes": [
+            {
+              "depth": 0,
+              "type": "Limit",
+              "relation": null,
+              "index": null,
+              "index_condition": null,
+              "filter": null
+            },
+            {
+              "depth": 1,
+              "type": "Incremental Sort",
+              "relation": null,
+              "index": null,
+              "index_condition": null,
+              "filter": null
+            },
+            {
+              "depth": 2,
+              "type": "Index Scan",
+              "relation": "products",
+              "index": "idx_products_price_btree",
+              "index_condition": null,
+              "filter": "(products.brand = 'Motorola'::text)"
+            }
+          ],
+          "warnings": [
+            "No category was parsed. Category is the leading column of the composite index, so the index is not applicable."
+          ]
+        },
+        "hnsw": {
+          "median_ms": 0.9735,
+          "min_ms": 0.846,
+          "max_ms": 4.688,
+          "p95_ms": 4.688,
+          "samples": [
+            4.688,
+            1.648,
+            0.99,
+            1.09,
+            0.906,
+            1.03,
+            0.856,
+            0.957,
+            0.846,
+            0.948
+          ],
+          "result_count": 5,
+          "indexes_used": [
+            "idx_products_embedding_hnsw"
+          ],
+          "top_node": "Limit",
+          "seq_scan_nodes": 0,
+          "index_scan_nodes": 1,
+          "nodes": [
+            {
+              "depth": 0,
+              "type": "Limit",
+              "relation": null,
+              "index": null,
+              "index_condition": null,
+              "filter": null
+            },
+            {
+              "depth": 1,
+              "type": "Index Scan",
+              "relation": "products",
+              "index": "idx_products_embedding_hnsw",
+              "index_condition": null,
+              "filter": "(products.embedding IS NOT NULL)"
+            }
+          ],
+          "warnings": []
+        },
+        "hybrid": {
+          "median_ms": 0.785,
+          "min_ms": 0.675,
+          "max_ms": 1.076,
+          "p95_ms": 1.076,
+          "samples": [
+            0.887,
+            0.787,
+            0.946,
+            0.75,
+            1.076,
+            0.675,
+            0.7,
+            0.783,
+            0.855,
+            0.712
+          ],
+          "result_count": 5,
+          "indexes_used": [
+            "idx_products_embedding_hnsw"
+          ],
+          "top_node": "Limit",
+          "seq_scan_nodes": 0,
+          "index_scan_nodes": 1,
+          "nodes": [
+            {
+              "depth": 0,
+              "type": "Limit",
+              "relation": null,
+              "index": null,
+              "index_condition": null,
+              "filter": null
+            },
+            {
+              "depth": 1,
+              "type": "Index Scan",
+              "relation": "products",
+              "index": "idx_products_embedding_hnsw",
+              "index_condition": null,
+              "filter": "((products.embedding IS NOT NULL) AND (products.brand = 'Motorola'::text))"
+            }
+          ],
+          "warnings": []
+        }
+      }
+    },
+    "black laptop under 80000": {
+      "query": "black laptop under 80000",
+      "parsed": {
+        "category": "Laptop",
+        "brand": null,
+        "color": "Black",
+        "max_price": 80000.0,
+        "use_case": null,
+        "keywords": []
+      },
+      "methods": {
+        "full_scan": {
+          "median_ms": 9.825,
+          "min_ms": 9.345,
+          "max_ms": 11.63,
+          "p95_ms": 11.63,
+          "samples": [
+            9.897,
+            9.76,
+            9.345,
+            9.611,
+            9.396,
+            11.63,
+            11.437,
+            9.743,
+            9.89,
+            9.909
+          ],
+          "result_count": 5,
+          "indexes_used": [],
+          "top_node": "Limit",
+          "seq_scan_nodes": 1,
+          "index_scan_nodes": 0,
+          "nodes": [
+            {
+              "depth": 0,
+              "type": "Limit",
+              "relation": null,
+              "index": null,
+              "index_condition": null,
+              "filter": null
+            },
+            {
+              "depth": 1,
+              "type": "Sort",
+              "relation": null,
+              "index": null,
+              "index_condition": null,
+              "filter": null
+            },
+            {
+              "depth": 2,
+              "type": "Seq Scan",
+              "relation": "products",
+              "index": null,
+              "index_condition": null,
+              "filter": "((products.category = 'Laptop'::text) AND (products.color = 'Black'::text) AND ((products.price_inr)::double precision <= '80000'::double precision))"
+            }
+          ],
+          "warnings": []
+        },
+        "btree": {
+          "median_ms": 0.626,
+          "min_ms": 0.582,
+          "max_ms": 1.055,
+          "p95_ms": 1.055,
+          "samples": [
+            1.055,
+            0.751,
+            0.594,
+            0.627,
+            0.683,
+            0.63,
+            0.62,
+            0.582,
+            0.625,
+            0.603
+          ],
+          "result_count": 5,
+          "indexes_used": [
+            "idx_products_category_price_color_btree"
+          ],
+          "top_node": "Limit",
+          "seq_scan_nodes": 0,
+          "index_scan_nodes": 1,
+          "nodes": [
+            {
+              "depth": 0,
+              "type": "Limit",
+              "relation": null,
+              "index": null,
+              "index_condition": null,
+              "filter": null
+            },
+            {
+              "depth": 1,
+              "type": "Sort",
+              "relation": null,
+              "index": null,
+              "index_condition": null,
+              "filter": null
+            },
+            {
+              "depth": 2,
+              "type": "Bitmap Heap Scan",
+              "relation": "products",
+              "index": null,
+              "index_condition": null,
+              "filter": "((products.price_inr)::double precision <= '80000'::double precision)"
+            },
+            {
+              "depth": 3,
+              "type": "Bitmap Index Scan",
+              "relation": null,
+              "index": "idx_products_category_price_color_btree",
+              "index_condition": "((products.category = 'Laptop'::text) AND (products.color = 'Black'::text))",
+              "filter": null
+            }
+          ],
+          "warnings": []
+        },
+        "hash": {
+          "median_ms": 0.6,
+          "min_ms": 0.571,
+          "max_ms": 0.676,
+          "p95_ms": 0.676,
+          "samples": [
+            0.656,
+            0.676,
+            0.622,
+            0.573,
+            0.594,
+            0.571,
+            0.606,
+            0.578,
+            0.615,
+            0.574
+          ],
+          "result_count": 5,
+          "indexes_used": [
+            "idx_products_category_price_color_btree"
+          ],
+          "top_node": "Limit",
+          "seq_scan_nodes": 0,
+          "index_scan_nodes": 1,
+          "nodes": [
+            {
+              "depth": 0,
+              "type": "Limit",
+              "relation": null,
+              "index": null,
+              "index_condition": null,
+              "filter": null
+            },
+            {
+              "depth": 1,
+              "type": "Sort",
+              "relation": null,
+              "index": null,
+              "index_condition": null,
+              "filter": null
+            },
+            {
+              "depth": 2,
+              "type": "Bitmap Heap Scan",
+              "relation": "products",
+              "index": null,
+              "index_condition": null,
+              "filter": "((products.price_inr)::double precision <= '80000'::double precision)"
+            },
+            {
+              "depth": 3,
+              "type": "Bitmap Index Scan",
+              "relation": null,
+              "index": "idx_products_category_price_color_btree",
+              "index_condition": "((products.category = 'Laptop'::text) AND (products.color = 'Black'::text))",
+              "filter": null
+            }
+          ],
+          "warnings": [
+            "No brand was parsed, so the brand hash index is not applicable. The plan may show a sequential scan."
+          ]
+        },
+        "composite_btree": {
+          "median_ms": 0.118,
+          "min_ms": 0.112,
+          "max_ms": 0.179,
+          "p95_ms": 0.179,
+          "samples": [
+            0.179,
+            0.151,
+            0.118,
+            0.118,
+            0.118,
+            0.112,
+            0.116,
+            0.122,
+            0.118,
+            0.13
+          ],
+          "result_count": 5,
+          "indexes_used": [
+            "idx_products_category_price_color_btree"
+          ],
+          "top_node": "Limit",
+          "seq_scan_nodes": 0,
+          "index_scan_nodes": 1,
+          "nodes": [
+            {
+              "depth": 0,
+              "type": "Limit",
+              "relation": null,
+              "index": null,
+              "index_condition": null,
+              "filter": null
+            },
+            {
+              "depth": 1,
+              "type": "Incremental Sort",
+              "relation": null,
+              "index": null,
+              "index_condition": null,
+              "filter": null
+            },
+            {
+              "depth": 2,
+              "type": "Index Scan",
+              "relation": "products",
+              "index": "idx_products_category_price_color_btree",
+              "index_condition": "((products.category = 'Laptop'::text) AND (products.color = 'Black'::text))",
+              "filter": "((products.price_inr)::double precision <= '80000'::double precision)"
+            }
+          ],
+          "warnings": []
+        },
+        "hnsw": {
+          "median_ms": 1.603,
+          "min_ms": 1.37,
+          "max_ms": 7.368,
+          "p95_ms": 7.368,
+          "samples": [
+            7.368,
+            2.104,
+            1.743,
+            1.513,
+            1.627,
+            1.37,
+            1.579,
+            1.479,
+            1.528,
+            1.727
+          ],
+          "result_count": 5,
+          "indexes_used": [
+            "idx_products_embedding_hnsw"
+          ],
+          "top_node": "Limit",
+          "seq_scan_nodes": 0,
+          "index_scan_nodes": 1,
+          "nodes": [
+            {
+              "depth": 0,
+              "type": "Limit",
+              "relation": null,
+              "index": null,
+              "index_condition": null,
+              "filter": null
+            },
+            {
+              "depth": 1,
+              "type": "Index Scan",
+              "relation": "products",
+              "index": "idx_products_embedding_hnsw",
+              "index_condition": null,
+              "filter": "(products.embedding IS NOT NULL)"
+            }
+          ],
+          "warnings": []
+        },
+        "hybrid": {
+          "median_ms": 1.695,
+          "min_ms": 1.49,
+          "max_ms": 1.857,
+          "p95_ms": 1.857,
+          "samples": [
+            1.629,
+            1.722,
+            1.832,
+            1.561,
+            1.712,
+            1.857,
+            1.49,
+            1.75,
+            1.66,
+            1.678
+          ],
+          "result_count": 5,
+          "indexes_used": [
+            "idx_products_embedding_hnsw"
+          ],
+          "top_node": "Limit",
+          "seq_scan_nodes": 0,
+          "index_scan_nodes": 1,
+          "nodes": [
+            {
+              "depth": 0,
+              "type": "Limit",
+              "relation": null,
+              "index": null,
+              "index_condition": null,
+              "filter": null
+            },
+            {
+              "depth": 1,
+              "type": "Index Scan",
+              "relation": "products",
+              "index": "idx_products_embedding_hnsw",
+              "index_condition": null,
+              "filter": "((products.embedding IS NOT NULL) AND (products.category = 'Laptop'::text) AND (products.color = 'Black'::text) AND ((products.price_inr)::double precision <= '80000'::double precision))"
+            }
+          ],
+          "warnings": []
+        }
+      }
+    },
+    "lightweight laptop for travel": {
+      "query": "lightweight laptop for travel",
+      "parsed": {
+        "category": "Laptop",
+        "brand": null,
+        "color": null,
+        "max_price": null,
+        "use_case": "travel",
+        "keywords": [
+          "lightweight"
+        ]
+      },
+      "methods": {
+        "btree": {
+          "median_ms": 14.2485,
+          "min_ms": 13.726,
+          "max_ms": 15.656,
+          "p95_ms": 15.656,
+          "samples": [
+            14.632,
+            15.656,
+            14.166,
+            13.756,
+            14.483,
+            14.331,
+            13.918,
+            14.61,
+            13.919,
+            13.726
+          ],
+          "result_count": 0,
+          "indexes_used": [
+            "idx_products_category_btree"
+          ],
+          "top_node": "Limit",
+          "seq_scan_nodes": 0,
+          "index_scan_nodes": 1,
+          "nodes": [
+            {
+              "depth": 0,
+              "type": "Limit",
+              "relation": null,
+              "index": null,
+              "index_condition": null,
+              "filter": null
+            },
+            {
+              "depth": 1,
+              "type": "Sort",
+              "relation": null,
+              "index": null,
+              "index_condition": null,
+              "filter": null
+            },
+            {
+              "depth": 2,
+              "type": "Bitmap Heap Scan",
+              "relation": "products",
+              "index": null,
+              "index_condition": null,
+              "filter": "((products.name ~~* '%lightweight%'::text) OR (products.description ~~* '%lightweight%'::text) OR (products.tags ~~* '%lightweight%'::text) OR (products.specifications ~~* '%lightweight%'::text) OR (products.use_case ~~* '%lightweight%'::text) OR (products.name ~~* '%portable%'::text) OR (products.description ~~* '%portable%'::text) OR (products.tags ~~* '%portable%'::text) OR (products.specifications ~~* '%portable%'::text) OR (products.use_case ~~* '%portable%'::text))"
+            },
+            {
+              "depth": 3,
+              "type": "Bitmap Index Scan",
+              "relation": null,
+              "index": "idx_products_category_btree",
+              "index_condition": "(products.category = 'Laptop'::text)",
+              "filter": null
+            }
+          ],
+          "warnings": []
+        },
+        "composite_btree": {
+          "median_ms": 15.017,
+          "min_ms": 14.508,
+          "max_ms": 15.552,
+          "p95_ms": 15.552,
+          "samples": [
+            15.414,
+            14.974,
+            14.858,
+            14.711,
+            14.853,
+            15.552,
+            15.248,
+            15.388,
+            14.508,
+            15.06
+          ],
+          "result_count": 0,
+          "indexes_used": [
+            "idx_products_category_price_color_btree"
+          ],
+          "top_node": "Limit",
+          "seq_scan_nodes": 0,
+          "index_scan_nodes": 1,
+          "nodes": [
+            {
+              "depth": 0,
+              "type": "Limit",
+              "relation": null,
+              "index": null,
+              "index_condition": null,
+              "filter": null
+            },
+            {
+              "depth": 1,
+              "type": "Incremental Sort",
+              "relation": null,
+              "index": null,
+              "index_condition": null,
+              "filter": null
+            },
+            {
+              "depth": 2,
+              "type": "Index Scan",
+              "relation": "products",
+              "index": "idx_products_category_price_color_btree",
+              "index_condition": "(products.category = 'Laptop'::text)",
+              "filter": "((products.name ~~* '%lightweight%'::text) OR (products.description ~~* '%lightweight%'::text) OR (products.tags ~~* '%lightweight%'::text) OR (products.specifications ~~* '%lightweight%'::text) OR (products.use_case ~~* '%lightweight%'::text) OR (products.name ~~* '%portable%'::text) OR (products.description ~~* '%portable%'::text) OR (products.tags ~~* '%portable%'::text) OR (products.specifications ~~* '%portable%'::text) OR (products.use_case ~~* '%portable%'::text))"
+            }
+          ],
+          "warnings": []
+        },
+        "hnsw": {
+          "median_ms": 0.907,
+          "min_ms": 0.728,
+          "max_ms": 1.109,
+          "p95_ms": 1.109,
+          "samples": [
+            1.101,
+            1.109,
+            0.737,
+            0.896,
+            0.8,
+            0.918,
+            0.728,
+            0.93,
+            0.77,
+            0.946
+          ],
+          "result_count": 5,
+          "indexes_used": [
+            "idx_products_embedding_hnsw"
+          ],
+          "top_node": "Limit",
+          "seq_scan_nodes": 0,
+          "index_scan_nodes": 1,
+          "nodes": [
+            {
+              "depth": 0,
+              "type": "Limit",
+              "relation": null,
+              "index": null,
+              "index_condition": null,
+              "filter": null
+            },
+            {
+              "depth": 1,
+              "type": "Index Scan",
+              "relation": "products",
+              "index": "idx_products_embedding_hnsw",
+              "index_condition": null,
+              "filter": "(products.embedding IS NOT NULL)"
+            }
+          ],
+          "warnings": []
+        },
+        "hybrid": {
+          "median_ms": 0.924,
+          "min_ms": 0.825,
+          "max_ms": 1.195,
+          "p95_ms": 1.195,
+          "samples": [
+            0.825,
+            0.961,
+            0.901,
+            0.88,
+            1.195,
+            0.93,
+            0.842,
+            0.955,
+            0.925,
+            0.923
+          ],
+          "result_count": 5,
+          "indexes_used": [
+            "idx_products_embedding_hnsw"
+          ],
+          "top_node": "Limit",
+          "seq_scan_nodes": 0,
+          "index_scan_nodes": 1,
+          "nodes": [
+            {
+              "depth": 0,
+              "type": "Limit",
+              "relation": null,
+              "index": null,
+              "index_condition": null,
+              "filter": null
+            },
+            {
+              "depth": 1,
+              "type": "Index Scan",
+              "relation": "products",
+              "index": "idx_products_embedding_hnsw",
+              "index_condition": null,
+              "filter": "((products.embedding IS NOT NULL) AND (products.category = 'Laptop'::text))"
+            }
+          ],
+          "warnings": []
+        }
+      }
+    },
+    "black laptop for programming under 80000": {
+      "query": "black laptop for programming under 80000",
+      "parsed": {
+        "category": "Laptop",
+        "brand": null,
+        "color": "Black",
+        "max_price": 80000.0,
+        "use_case": "programming",
+        "keywords": []
+      },
+      "methods": {
+        "full_scan": {
+          "median_ms": 9.559,
+          "min_ms": 9.139,
+          "max_ms": 10.634,
+          "p95_ms": 10.634,
+          "samples": [
+            10.634,
+            9.661,
+            9.205,
+            9.563,
+            9.139,
+            9.629,
+            9.562,
+            9.361,
+            9.469,
+            9.556
+          ],
+          "result_count": 5,
+          "indexes_used": [],
+          "top_node": "Limit",
+          "seq_scan_nodes": 1,
+          "index_scan_nodes": 0,
+          "nodes": [
+            {
+              "depth": 0,
+              "type": "Limit",
+              "relation": null,
+              "index": null,
+              "index_condition": null,
+              "filter": null
+            },
+            {
+              "depth": 1,
+              "type": "Sort",
+              "relation": null,
+              "index": null,
+              "index_condition": null,
+              "filter": null
+            },
+            {
+              "depth": 2,
+              "type": "Seq Scan",
+              "relation": "products",
+              "index": null,
+              "index_condition": null,
+              "filter": "((products.category = 'Laptop'::text) AND (products.color = 'Black'::text) AND ((products.price_inr)::double precision <= '80000'::double precision))"
+            }
+          ],
+          "warnings": []
+        },
+        "btree": {
+          "median_ms": 0.6505,
+          "min_ms": 0.599,
+          "max_ms": 1.166,
+          "p95_ms": 1.166,
+          "samples": [
+            1.166,
+            0.831,
+            0.652,
+            0.656,
+            0.62,
+            0.629,
+            0.599,
+            0.676,
+            0.606,
+            0.649
+          ],
+          "result_count": 5,
+          "indexes_used": [
+            "idx_products_category_price_color_btree"
+          ],
+          "top_node": "Limit",
+          "seq_scan_nodes": 0,
+          "index_scan_nodes": 1,
+          "nodes": [
+            {
+              "depth": 0,
+              "type": "Limit",
+              "relation": null,
+              "index": null,
+              "index_condition": null,
+              "filter": null
+            },
+            {
+              "depth": 1,
+              "type": "Sort",
+              "relation": null,
+              "index": null,
+              "index_condition": null,
+              "filter": null
+            },
+            {
+              "depth": 2,
+              "type": "Bitmap Heap Scan",
+              "relation": "products",
+              "index": null,
+              "index_condition": null,
+              "filter": "((products.price_inr)::double precision <= '80000'::double precision)"
+            },
+            {
+              "depth": 3,
+              "type": "Bitmap Index Scan",
+              "relation": null,
+              "index": "idx_products_category_price_color_btree",
+              "index_condition": "((products.category = 'Laptop'::text) AND (products.color = 'Black'::text))",
+              "filter": null
+            }
+          ],
+          "warnings": []
+        },
+        "composite_btree": {
+          "median_ms": 0.115,
+          "min_ms": 0.106,
+          "max_ms": 0.216,
+          "p95_ms": 0.216,
+          "samples": [
+            0.197,
+            0.216,
+            0.106,
+            0.115,
+            0.11,
+            0.115,
+            0.126,
+            0.123,
+            0.106,
+            0.113
+          ],
+          "result_count": 5,
+          "indexes_used": [
+            "idx_products_category_price_color_btree"
+          ],
+          "top_node": "Limit",
+          "seq_scan_nodes": 0,
+          "index_scan_nodes": 1,
+          "nodes": [
+            {
+              "depth": 0,
+              "type": "Limit",
+              "relation": null,
+              "index": null,
+              "index_condition": null,
+              "filter": null
+            },
+            {
+              "depth": 1,
+              "type": "Incremental Sort",
+              "relation": null,
+              "index": null,
+              "index_condition": null,
+              "filter": null
+            },
+            {
+              "depth": 2,
+              "type": "Index Scan",
+              "relation": "products",
+              "index": "idx_products_category_price_color_btree",
+              "index_condition": "((products.category = 'Laptop'::text) AND (products.color = 'Black'::text))",
+              "filter": "((products.price_inr)::double precision <= '80000'::double precision)"
+            }
+          ],
+          "warnings": []
+        },
+        "hnsw": {
+          "median_ms": 1.2115,
+          "min_ms": 1.037,
+          "max_ms": 1.516,
+          "p95_ms": 1.516,
+          "samples": [
+            1.5,
+            1.151,
+            1.248,
+            1.279,
+            1.175,
+            1.164,
+            1.037,
+            1.516,
+            1.096,
+            1.32
+          ],
+          "result_count": 5,
+          "indexes_used": [
+            "idx_products_embedding_hnsw"
+          ],
+          "top_node": "Limit",
+          "seq_scan_nodes": 0,
+          "index_scan_nodes": 1,
+          "nodes": [
+            {
+              "depth": 0,
+              "type": "Limit",
+              "relation": null,
+              "index": null,
+              "index_condition": null,
+              "filter": null
+            },
+            {
+              "depth": 1,
+              "type": "Index Scan",
+              "relation": "products",
+              "index": "idx_products_embedding_hnsw",
+              "index_condition": null,
+              "filter": "(products.embedding IS NOT NULL)"
+            }
+          ],
+          "warnings": []
+        },
+        "hybrid": {
+          "median_ms": 1.2855,
+          "min_ms": 1.077,
+          "max_ms": 1.501,
+          "p95_ms": 1.501,
+          "samples": [
+            1.501,
+            1.224,
+            1.354,
+            1.103,
+            1.399,
+            1.077,
+            1.286,
+            1.356,
+            1.262,
+            1.285
+          ],
+          "result_count": 5,
+          "indexes_used": [
+            "idx_products_embedding_hnsw"
+          ],
+          "top_node": "Limit",
+          "seq_scan_nodes": 0,
+          "index_scan_nodes": 1,
+          "nodes": [
+            {
+              "depth": 0,
+              "type": "Limit",
+              "relation": null,
+              "index": null,
+              "index_condition": null,
+              "filter": null
+            },
+            {
+              "depth": 1,
+              "type": "Index Scan",
+              "relation": "products",
+              "index": "idx_products_embedding_hnsw",
+              "index_condition": null,
+              "filter": "((products.embedding IS NOT NULL) AND (products.category = 'Laptop'::text) AND (products.color = 'Black'::text) AND ((products.price_inr)::double precision <= '80000'::double precision))"
+            }
+          ],
+          "warnings": []
+        }
+      }
+    },
+    "Google pixel": {
+      "query": "Google pixel",
+      "parsed": {
+        "category": null,
+        "brand": "Google",
+        "color": null,
+        "max_price": null,
+        "use_case": null,
+        "keywords": [
+          "pixel"
+        ]
+      },
+      "methods": {
+        "full_scan": {
+          "median_ms": 9.6485,
+          "min_ms": 8.864,
+          "max_ms": 25.715,
+          "p95_ms": 25.715,
+          "samples": [
+            11.457,
+            9.917,
+            10.076,
+            25.715,
+            10.23,
+            9.38,
+            8.864,
+            9.213,
+            8.96,
+            8.923
+          ],
+          "result_count": 5,
+          "indexes_used": [],
+          "top_node": "Limit",
+          "seq_scan_nodes": 1,
+          "index_scan_nodes": 0,
+          "nodes": [
+            {
+              "depth": 0,
+              "type": "Limit",
+              "relation": null,
+              "index": null,
+              "index_condition": null,
+              "filter": null
+            },
+            {
+              "depth": 1,
+              "type": "Gather Merge",
+              "relation": null,
+              "index": null,
+              "index_condition": null,
+              "filter": null
+            },
+            {
+              "depth": 2,
+              "type": "Sort",
+              "relation": null,
+              "index": null,
+              "index_condition": null,
+              "filter": null
+            },
+            {
+              "depth": 3,
+              "type": "Seq Scan",
+              "relation": "products",
+              "index": null,
+              "index_condition": null,
+              "filter": "((products.brand = 'Google'::text) AND ((products.name ~~* '%pixel%'::text) OR (products.description ~~* '%pixel%'::text) OR (products.tags ~~* '%pixel%'::text) OR (products.specifications ~~* '%pixel%'::text) OR (products.use_case ~~* '%pixel%'::text)))"
+            }
+          ],
+          "warnings": []
+        },
+        "hash": {
+          "median_ms": 1.1405,
+          "min_ms": 1.023,
+          "max_ms": 1.492,
+          "p95_ms": 1.492,
+          "samples": [
+            1.492,
+            1.269,
+            1.146,
+            1.228,
+            1.174,
+            1.135,
+            1.036,
+            1.069,
+            1.023,
+            1.09
+          ],
+          "result_count": 5,
+          "indexes_used": [
+            "idx_products_brand_hash"
+          ],
+          "top_node": "Limit",
+          "seq_scan_nodes": 0,
+          "index_scan_nodes": 1,
+          "nodes": [
+            {
+              "depth": 0,
+              "type": "Limit",
+              "relation": null,
+              "index": null,
+              "index_condition": null,
+              "filter": null
+            },
+            {
+              "depth": 1,
+              "type": "Sort",
+              "relation": null,
+              "index": null,
+              "index_condition": null,
+              "filter": null
+            },
+            {
+              "depth": 2,
+              "type": "Bitmap Heap Scan",
+              "relation": "products",
+              "index": null,
+              "index_condition": null,
+              "filter": "((products.name ~~* '%pixel%'::text) OR (products.description ~~* '%pixel%'::text) OR (products.tags ~~* '%pixel%'::text) OR (products.specifications ~~* '%pixel%'::text) OR (products.use_case ~~* '%pixel%'::text))"
+            },
+            {
+              "depth": 3,
+              "type": "Bitmap Index Scan",
+              "relation": null,
+              "index": "idx_products_brand_hash",
+              "index_condition": "(products.brand = 'Google'::text)",
+              "filter": null
+            }
+          ],
+          "warnings": []
+        },
+        "composite_btree": {
+          "median_ms": 1.1295,
+          "min_ms": 1.053,
+          "max_ms": 1.283,
+          "p95_ms": 1.283,
+          "samples": [
+            1.096,
+            1.154,
+            1.053,
+            1.142,
+            1.283,
+            1.149,
+            1.124,
+            1.135,
+            1.079,
+            1.073
+          ],
+          "result_count": 5,
+          "indexes_used": [
+            "idx_products_brand_hash"
+          ],
+          "top_node": "Limit",
+          "seq_scan_nodes": 0,
+          "index_scan_nodes": 1,
+          "nodes": [
+            {
+              "depth": 0,
+              "type": "Limit",
+              "relation": null,
+              "index": null,
+              "index_condition": null,
+              "filter": null
+            },
+            {
+              "depth": 1,
+              "type": "Sort",
+              "relation": null,
+              "index": null,
+              "index_condition": null,
+              "filter": null
+            },
+            {
+              "depth": 2,
+              "type": "Bitmap Heap Scan",
+              "relation": "products",
+              "index": null,
+              "index_condition": null,
+              "filter": "((products.name ~~* '%pixel%'::text) OR (products.description ~~* '%pixel%'::text) OR (products.tags ~~* '%pixel%'::text) OR (products.specifications ~~* '%pixel%'::text) OR (products.use_case ~~* '%pixel%'::text))"
+            },
+            {
+              "depth": 3,
+              "type": "Bitmap Index Scan",
+              "relation": null,
+              "index": "idx_products_brand_hash",
+              "index_condition": "(products.brand = 'Google'::text)",
+              "filter": null
+            }
+          ],
+          "warnings": [
+            "No category was parsed. Category is the leading column of the composite index, so the index is not applicable."
+          ]
+        },
+        "hnsw": {
+          "median_ms": 0.8195,
+          "min_ms": 0.667,
+          "max_ms": 3.382,
+          "p95_ms": 3.382,
+          "samples": [
+            3.382,
+            1.695,
+            0.905,
+            0.758,
+            0.845,
+            0.852,
+            0.667,
+            0.785,
+            0.697,
+            0.794
+          ],
+          "result_count": 5,
+          "indexes_used": [
+            "idx_products_embedding_hnsw"
+          ],
+          "top_node": "Limit",
+          "seq_scan_nodes": 0,
+          "index_scan_nodes": 1,
+          "nodes": [
+            {
+              "depth": 0,
+              "type": "Limit",
+              "relation": null,
+              "index": null,
+              "index_condition": null,
+              "filter": null
+            },
+            {
+              "depth": 1,
+              "type": "Index Scan",
+              "relation": "products",
+              "index": "idx_products_embedding_hnsw",
+              "index_condition": null,
+              "filter": "(products.embedding IS NOT NULL)"
+            }
+          ],
+          "warnings": []
+        },
+        "hybrid": {
+          "median_ms": 0.7055,
+          "min_ms": 0.566,
+          "max_ms": 0.834,
+          "p95_ms": 0.834,
+          "samples": [
+            0.671,
+            0.834,
+            0.756,
+            0.777,
+            0.654,
+            0.738,
+            0.768,
+            0.655,
+            0.566,
+            0.673
+          ],
+          "result_count": 5,
+          "indexes_used": [
+            "idx_products_embedding_hnsw"
+          ],
+          "top_node": "Limit",
+          "seq_scan_nodes": 0,
+          "index_scan_nodes": 1,
+          "nodes": [
+            {
+              "depth": 0,
+              "type": "Limit",
+              "relation": null,
+              "index": null,
+              "index_condition": null,
+              "filter": null
+            },
+            {
+              "depth": 1,
+              "type": "Index Scan",
+              "relation": "products",
+              "index": "idx_products_embedding_hnsw",
+              "index_condition": null,
+              "filter": "((products.embedding IS NOT NULL) AND (products.brand = 'Google'::text))"
+            }
+          ],
+          "warnings": []
+        }
+      }
+    }
+  },
+  "cache_demo": [
+    {
+      "db_ms": 1.636,
+      "embedding_ms": 2.767,
+      "status": "miss",
+      "result_count": 5
+    },
+    {
+      "db_ms": 0.0,
+      "embedding_ms": 0.0,
+      "status": "hit",
+      "result_count": 5
+    },
+    {
+      "db_ms": 0.0,
+      "embedding_ms": 0.0,
+      "status": "hit",
+      "result_count": 5
+    }
+  ],
+  "out_of_scope": {
+    "out_of_scope": true,
+    "db_execution_ms": 0.0,
+    "result_count": 0,
+    "sql": null,
+    "notice": "No products in this catalogue match that query. Try a product category, brand, colour, price range, or a feature such as \u201cwireless headphones\u201d."
+  }
+}
